@@ -1,0 +1,522 @@
+/* ========== CATALOGO VIEW - CYBER ENHANCED ========== */
+.catalogo-view {
+  min-height: 100vh;
+  background: #000;
+  padding: 8rem 0 5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Cyber grid background */
+.catalogo-view::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(212, 175, 55, 0.03) 40px, rgba(212, 175, 55, 0.03) 41px),
+    repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(212, 175, 55, 0.03) 40px, rgba(212, 175, 55, 0.03) 41px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Digital scan effect */
+.catalogo-view::after {
+  content: '';
+  position: fixed;
+  top: -100%;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, transparent, rgba(212, 175, 55, 0.1), transparent);
+  animation: verticalScan 8s linear infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes verticalScan {
+  0% { top: -100%; }
+  100% { top: 100%; }
+}
+
+/* ========== CATALOGO HEADER ========== */
+.catalogo-section {
+  padding: 5rem 1.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+.catalogo-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(2.5rem, 5vw, 5rem);
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 1rem;
+  letter-spacing: 0.3em;
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  text-shadow: 
+    0 0 20px rgba(212, 175, 55, 0.8),
+    0 0 40px rgba(212, 175, 55, 0.5),
+    2px 0 2px rgba(0, 255, 240, 0.3),
+    -2px 0 2px rgba(255, 0, 255, 0.3);
+  animation: titleGlitch 5s infinite, glow-pulse-cyber 3s ease-in-out infinite;
+}
+
+@keyframes titleGlitch {
+  0%, 90%, 100% {
+    transform: translate(0, 0);
+    text-shadow: 
+      0 0 20px rgba(212, 175, 55, 0.8),
+      0 0 40px rgba(212, 175, 55, 0.5);
+  }
+  91%, 93%, 95%, 97% {
+    transform: translate(2px, -1px);
+    text-shadow: 
+      0 0 20px rgba(212, 175, 55, 0.8),
+      5px 0 0 rgba(255, 0, 0, 0.5),
+      -5px 0 0 rgba(0, 255, 255, 0.5);
+  }
+  92%, 94%, 96%, 98% {
+    transform: translate(-2px, 1px);
+    text-shadow: 
+      0 0 20px rgba(212, 175, 55, 0.8),
+      -5px 0 0 rgba(255, 0, 0, 0.5),
+      5px 0 0 rgba(0, 255, 255, 0.5);
+  }
+}
+
+@keyframes glow-pulse-cyber {
+  0%, 100% {
+    text-shadow: 
+      0 0 20px rgba(212, 175, 55, 0.5),
+      0 0 40px rgba(212, 175, 55, 0.3),
+      0 0 60px rgba(212, 175, 55, 0.1);
+  }
+  50% {
+    text-shadow: 
+      0 0 30px rgba(212, 175, 55, 0.9),
+      0 0 50px rgba(212, 175, 55, 0.6),
+      0 0 70px rgba(212, 175, 55, 0.3);
+  }
+}
+
+.catalogo-subtitle {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.subtitle-ornament {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.ornament-symbol {
+  color: #D4AF37;
+  font-size: 1.5rem;
+  animation: symbolRotate 10s linear infinite;
+  text-shadow: 0 0 15px rgba(212, 175, 55, 0.7);
+}
+
+@keyframes symbolRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.subtitle-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.875rem;
+  letter-spacing: 0.3em;
+  color: rgba(212, 175, 55, 0.8);
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+/* ========== PRODUCTS GRID ========== */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 2rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 10;
+}
+
+@media (min-width: 640px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .products-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ========== TAROT CARD STYLE - CYBER ENHANCED ========== */
+.tarot-card {
+  position: relative;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  overflow: hidden;
+  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tarot-card:hover {
+  transform: translateY(-15px);
+  border-color: rgba(212, 175, 55, 0.8);
+  box-shadow: 
+    0 25px 70px rgba(212, 175, 55, 0.5),
+    0 0 30px rgba(212, 175, 55, 0.3),
+    inset 0 0 30px rgba(212, 175, 55, 0.1);
+}
+
+/* Card shine effect on hover */
+.tarot-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
+  transition: left 0.8s;
+  z-index: 5;
+}
+
+.tarot-card:hover::before {
+  left: 100%;
+}
+
+/* Digital scan effect per card */
+.tarot-card::after {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, transparent, rgba(0, 255, 240, 0.1), transparent);
+  animation: cardScan 3s linear infinite;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.tarot-card:hover::after {
+  opacity: 1;
+}
+
+@keyframes cardScan {
+  0% { top: -100%; }
+  100% { top: 100%; }
+}
+
+/* ========== CARD FRAME ORNAMENTS - CYBER ========== */
+.card-frame {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Cyber border effect */
+.card-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  clip-path: polygon(
+    0 0, 15px 0, 15px 2px, 2px 2px, 2px 15px, 0 15px,
+    0 calc(100% - 15px), 2px calc(100% - 15px), 2px calc(100% - 2px), 15px calc(100% - 2px), 15px 100%, 0 100%,
+    0 100%, calc(100% - 15px) 100%, calc(100% - 15px) calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) calc(100% - 15px), 100% calc(100% - 15px),
+    100% 15px, calc(100% - 2px) 15px, calc(100% - 2px) 2px, calc(100% - 15px) 2px, calc(100% - 15px) 0, 100% 0
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.tarot-card:hover .card-frame::before {
+  opacity: 1;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+}
+
+.card-corner {
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  border: 2px solid #D4AF37;
+  opacity: 0.4;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+.tarot-card:hover .card-corner {
+  opacity: 1;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.7);
+  border-color: #FFD700;
+}
+
+.card-tl {
+  top: 8px;
+  left: 8px;
+  border-right: none;
+  border-bottom: none;
+  clip-path: polygon(0 0, 100% 0, 100% 2px, 2px 2px, 2px 100%, 0 100%);
+}
+
+.card-tr {
+  top: 8px;
+  right: 8px;
+  border-left: none;
+  border-bottom: none;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, calc(100% - 2px) 100%, calc(100% - 2px) 2px, 0 2px);
+}
+
+.card-bl {
+  bottom: 8px;
+  left: 8px;
+  border-right: none;
+  border-top: none;
+  clip-path: polygon(0 0, 2px 0, 2px calc(100% - 2px), 100% calc(100% - 2px), 100% 100%, 0 100%);
+}
+
+.card-br {
+  bottom: 8px;
+  right: 8px;
+  border-left: none;
+  border-top: none;
+  clip-path: polygon(0 calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* ========== PRODUCT IMAGE ========== */
+.product-image-container {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1), filter 0.3s ease;
+  filter: grayscale(0.2) contrast(1.1);
+}
+
+.tarot-card:hover .product-image {
+  transform: scale(1.15);
+  filter: grayscale(0) contrast(1.2) brightness(1.1);
+}
+
+.image-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.7) 50%, transparent 100%);
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.tarot-card:hover .image-overlay {
+  opacity: 0.5;
+}
+
+/* ========== PRODUCT INFO ========== */
+.product-info {
+  padding: 1.5rem;
+  position: relative;
+  z-index: 4;
+}
+
+.product-symbol {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-symbol span {
+  color: #D4AF37;
+  font-size: 1.25rem;
+  text-shadow: 0 0 15px rgba(212, 175, 55, 0.8);
+  animation: symbolPulse 3s ease-in-out infinite;
+}
+
+@keyframes symbolPulse {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+    text-shadow: 0 0 15px rgba(212, 175, 55, 0.8);
+  }
+  50% { 
+    opacity: 0.7; 
+    transform: scale(1.2);
+    text-shadow: 0 0 25px rgba(212, 175, 55, 1);
+  }
+}
+
+.product-category {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  color: rgba(212, 175, 55, 0.8);
+  margin-bottom: 0.5rem;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+.product-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  text-align: center;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+  transition: all 0.3s ease;
+}
+
+.tarot-card:hover .product-name {
+  color: #D4AF37;
+  text-shadow: 0 0 20px rgba(212, 175, 55, 0.8);
+}
+
+.product-price {
+  font-family: 'Cinzel', serif;
+  font-size: 1.5rem;
+  color: #D4AF37;
+  text-align: center;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
+  letter-spacing: 0.1em;
+}
+
+/* ========== PRODUCT BUTTON - CYBER ========== */
+.product-button {
+  width: 100%;
+  padding: 0.875rem;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  background: transparent;
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+.button-text {
+  position: relative;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.button-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #D4AF37, #FFD700);
+  transform: translateX(-100%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-button:hover {
+  color: #000;
+  border-color: #FFD700;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+}
+
+.product-button:hover .button-bg {
+  transform: translateX(0);
+}
+
+.product-button:hover .button-text {
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Cyber bracket decoration */
+.product-button::before {
+  content: '>';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #D4AF37;
+  font-family: 'Share Tech Mono', monospace;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 11;
+}
+
+.product-button::after {
+  content: '<';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #D4AF37;
+  font-family: 'Share Tech Mono', monospace;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 11;
+}
+
+.product-button:hover::before,
+.product-button:hover::after {
+  opacity: 1;
+  color: #000;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .catalogo-view {
+    padding: 6rem 0 3rem;
+  }
+
+  .catalogo-section {
+    padding: 2rem 1rem;
+  }
+
+  .tarot-card:hover {
+    transform: translateY(-10px);
+  }
+
+  .card-corner {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .catalogo-title {
+    font-size: 2rem;
+  }
+
+  .product-button {
+    font-size: 0.6rem;
+  }
+}

@@ -1,0 +1,633 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;900&family=Montserrat:wght@200;300;400;500&family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap');
+
+/* ========== NAVBAR PRINCIPAL - CYBER ENHANCED ========== */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  background: #000;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navbar::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.5), transparent);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+/* Digital grid overlay */
+.navbar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(212, 175, 55, 0.03) 2px, rgba(212, 175, 55, 0.03) 4px),
+    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(212, 175, 55, 0.03) 2px, rgba(212, 175, 55, 0.03) 4px);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.navbar.scrolled {
+  backdrop-filter: blur(20px);
+  background: rgba(0, 0, 0, 0.95);
+  box-shadow: 
+    0 4px 30px rgba(212, 175, 55, 0.2),
+    0 0 60px rgba(212, 175, 55, 0.1),
+    inset 0 1px 0 rgba(212, 175, 55, 0.1);
+}
+
+.navbar.scrolled::before,
+.navbar.scrolled::after {
+  opacity: 1;
+}
+
+/* ========== TOP BANNER ESOTÉRICO - CYBER ========== */
+.esoteric-banner {
+  background: linear-gradient(90deg, #000 0%, rgba(133, 100, 4, 0.1) 50%, #000 100%);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated particles */
+.esoteric-banner::before {
+  content: '✦';
+  position: absolute;
+  left: 5%;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(212, 175, 55, 0.3);
+  font-size: 0.875rem;
+  animation: particleTwinkle 3s ease-in-out infinite;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+.esoteric-banner::after {
+  content: '✦';
+  position: absolute;
+  right: 5%;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(212, 175, 55, 0.3);
+  font-size: 0.875rem;
+  animation: particleTwinkle 3s ease-in-out infinite 1.5s;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+@keyframes particleTwinkle {
+  0%, 100% { 
+    opacity: 0.3; 
+    transform: translateY(-50%) scale(1); 
+    text-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+  }
+  50% { 
+    opacity: 0.8; 
+    transform: translateY(-50%) scale(1.3); 
+    text-shadow: 0 0 15px rgba(212, 175, 55, 0.7);
+  }
+}
+
+/* ========== MENSAJES ROTATIVOS - CYBER ========== */
+.rotating-messages {
+  text-align: center;
+  padding: 0.5rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Scan line effect */
+.rotating-messages::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+  animation: scanHorizontal 3s linear infinite;
+}
+
+@keyframes scanHorizontal {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.message-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  color: rgba(212, 175, 55, 0.9);
+  animation: messageGlitch 0.8s ease-in-out;
+  margin: 0;
+  text-transform: uppercase;
+  position: relative;
+  text-shadow: 
+    0 0 10px rgba(212, 175, 55, 0.5),
+    2px 0 2px rgba(0, 255, 240, 0.3),
+    -2px 0 2px rgba(255, 0, 255, 0.3);
+}
+
+@keyframes messageGlitch {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(5px);
+  }
+  20% {
+    opacity: 0.5;
+    transform: translateY(5px) translateX(2px);
+    filter: blur(2px);
+  }
+  40% {
+    opacity: 0.7;
+    transform: translateY(2px) translateX(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) translateX(0);
+    filter: blur(0);
+  }
+}
+
+/* ========== CONTAINER PRINCIPAL - CYBER ========== */
+.navbar-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+/* Cyber corner decorations */
+.navbar-container::before,
+.navbar-container::after {
+  content: '';
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  opacity: 0;
+  transition: all 0.5s ease;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+.navbar.scrolled .navbar-container::before,
+.navbar.scrolled .navbar-container::after {
+  opacity: 1;
+}
+
+.navbar-container::before {
+  top: 0;
+  left: 0;
+  border-right: none;
+  border-bottom: none;
+  clip-path: polygon(0 0, 100% 0, 100% 2px, 2px 2px, 2px 100%, 0 100%);
+}
+
+.navbar-container::after {
+  top: 0;
+  right: 0;
+  border-left: none;
+  border-bottom: none;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, calc(100% - 2px) 100%, calc(100% - 2px) 2px, 0 2px);
+}
+
+/* ========== LOGO - CYBER ENHANCED ========== */
+.logo {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.logo-link:hover {
+  transform: translateY(-2px);
+  filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.5));
+}
+
+.logo-image-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  padding: 2px;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.5), rgba(0, 0, 0, 0.9));
+  box-shadow: 
+    0 0 30px rgba(212, 175, 55, 0.3),
+    inset 0 0 30px rgba(212, 175, 55, 0.2),
+    0 0 10px rgba(0, 255, 240, 0.2);
+  animation: logoFloat 6s ease-in-out infinite;
+  position: relative;
+}
+
+/* Rotating border effect */
+.logo-image-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, transparent, rgba(212, 175, 55, 0.5), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  animation: rotateBorder 3s linear infinite;
+}
+
+.logo-link:hover .logo-image-wrapper::before {
+  opacity: 1;
+}
+
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+    box-shadow: 
+      0 0 30px rgba(212, 175, 55, 0.3),
+      inset 0 0 30px rgba(212, 175, 55, 0.2),
+      0 0 10px rgba(0, 255, 240, 0.2);
+  }
+  50% {
+    transform: translateY(-8px) rotate(3deg);
+    box-shadow: 
+      0 5px 40px rgba(212, 175, 55, 0.5),
+      inset 0 0 40px rgba(212, 175, 55, 0.3),
+      0 0 20px rgba(0, 255, 240, 0.3);
+  }
+}
+
+@keyframes rotateBorder {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.logo-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+  filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.5));
+}
+
+.logo-text {
+  font-family: 'Cinzel', serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #fff;
+  text-shadow: 
+    0 0 20px rgba(212, 175, 55, 0.6),
+    0 0 40px rgba(212, 175, 55, 0.4),
+    2px 0 2px rgba(0, 255, 240, 0.2),
+    -2px 0 2px rgba(255, 0, 255, 0.2);
+  position: relative;
+}
+
+/* Digital underline */
+.logo-text::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #D4AF37, transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+.logo-link:hover .logo-text::after {
+  opacity: 0.7;
+}
+
+/* ========== MENÚ DESKTOP - CYBER ========== */
+.desktop-menu {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+.menu-link {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.85);
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0.5rem 0;
+  text-transform: uppercase;
+}
+
+/* Cyber bracket before link */
+.menu-link::before {
+  content: '[';
+  position: absolute;
+  left: -15px;
+  color: #D4AF37;
+  font-size: 0.9rem;
+  opacity: 0;
+  transform: translateX(5px);
+  transition: all 0.3s ease;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+.menu-link::after {
+  content: ']';
+  position: absolute;
+  right: -15px;
+  color: #D4AF37;
+  font-size: 0.9rem;
+  opacity: 0;
+  transform: translateX(-5px);
+  transition: all 0.3s ease;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+.menu-link:hover {
+  color: #D4AF37;
+  text-shadow: 
+    0 0 10px rgba(212, 175, 55, 0.7),
+    0 0 20px rgba(212, 175, 55, 0.5);
+}
+
+.menu-link:hover::before,
+.menu-link:hover::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.menu-link.router-link-active {
+  color: #D4AF37;
+  text-shadow: 0 0 15px rgba(212, 175, 55, 0.7);
+}
+
+.menu-link.router-link-active::before,
+.menu-link.router-link-active::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Icon links con efecto cyber */
+.icon-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.icon-link::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  background: radial-gradient(circle, transparent 60%, rgba(212, 175, 55, 0.1) 100%);
+  opacity: 0;
+}
+
+.icon-link:hover {
+  transform: translateY(-2px);
+  color: #D4AF37;
+  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+}
+
+.icon-link:hover::before {
+  opacity: 1;
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+}
+
+/* ========== BOTÓN MENÚ MÓVIL - CYBER ========== */
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1001;
+}
+
+.mobile-menu-toggle::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+
+.mobile-menu-toggle:hover {
+  color: #D4AF37;
+  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+}
+
+.mobile-menu-toggle:hover::before {
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+}
+
+/* ========== MENÚ MÓVIL - CYBER ========== */
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.98);
+  backdrop-filter: blur(20px);
+  z-index: 999;
+  padding-top: 80px;
+}
+
+/* Digital grid overlay */
+.mobile-menu::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(212, 175, 55, 0.03) 20px, rgba(212, 175, 55, 0.03) 21px),
+    repeating-linear-gradient(90deg, transparent, transparent 20px, rgba(212, 175, 55, 0.03) 20px, rgba(212, 175, 55, 0.03) 21px);
+  pointer-events: none;
+}
+
+/* Decorative cyber elements */
+.mobile-menu::after {
+  content: '{ }';
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(212, 175, 55, 0.4);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.5rem;
+  animation: codeP ulse 4s ease-in-out infinite;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+@keyframes codePulse {
+  0%, 100% { 
+    opacity: 0.4; 
+    transform: translateX(-50%) scale(1); 
+  }
+  50% { 
+    opacity: 0.8; 
+    transform: translateX(-50%) scale(1.1); 
+  }
+}
+
+.mobile-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 3rem 1.5rem;
+  gap: 0;
+}
+
+.mobile-link {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 1.25rem 0;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+  text-transform: uppercase;
+}
+
+.mobile-link::before {
+  content: '>';
+  color: #D4AF37;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.2rem;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.7);
+}
+
+.mobile-link:hover {
+  color: #D4AF37;
+  padding-left: 2rem;
+  border-bottom-color: rgba(212, 175, 55, 0.5);
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0.05), transparent);
+}
+
+.mobile-link:hover::before {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.mobile-link.router-link-active {
+  color: #D4AF37;
+  border-bottom-color: #D4AF37;
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0.1), transparent);
+  box-shadow: inset 0 0 20px rgba(212, 175, 55, 0.1);
+}
+
+.mobile-link.router-link-active::before {
+  opacity: 1;
+  transform: translateX(0);
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ========== TRANSICIONES ========== */
+.mobile-fade-enter-active,
+.mobile-fade-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-fade-enter-from {
+  opacity: 0;
+  transform: translateY(-30px);
+}
+
+.mobile-fade-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .desktop-menu {
+    display: none;
+  }
+
+  .mobile-menu-toggle {
+    display: block;
+  }
+
+  .navbar-container {
+    padding: 0.75rem 1rem;
+  }
+
+  .navbar-container::before,
+  .navbar-container::after {
+    display: none;
+  }
+
+  .logo-text {
+    font-size: 1.5rem;
+  }
+
+  .logo-image-wrapper {
+    width: 40px;
+    height: 40px;
+  }
+
+  .message-text {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-text {
+    font-size: 1.25rem;
+  }
+
+  .logo-image-wrapper {
+    width: 36px;
+    height: 36px;
+  }
+
+  .mobile-link {
+    font-size: 1rem;
+    padding: 1rem 0;
+  }
+}
