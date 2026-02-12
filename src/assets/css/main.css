@@ -1,271 +1,30 @@
-/* ========== BRANA - MAIN CSS (IMPROVED) ========== */
-/* Archivo principal que importa todos los estilos del proyecto */
+/* ================= BASE STYLES ================= */
+@import './base/variables.css';
+@import './base/reset.css';
+@import './base/globals.css';
+@import './base/typography.css';
 
-/* ========== GLOBALES ========== */
-@import './globals.css';
+/* ================= COMPONENTS ================= */
+@import './components/buttons.css';
+@import './components/inputs.css';
+@import './components/cards.css';
+@import './components/modals.css';
+@import './components/navbar.css';
 
-/* ========== COMPONENTES ========== */
-@import './navbar.css';
-@import './footer.css';
+/* ================= LAYOUT ================= */
+@import './layout/header.css';
+@import './layout/footer.css';
+@import './layout/navigation.css';
+@import './layout/grid.css';
 
-/* ========== VISTAS ========== */
-@import './Hero.css';
-@import './home.css'; /* Nuevos efectos neo-clásicos cyberpunk */
-@import './catalogo.css';
-@import './noticias.css';
+/* ================= VIEWS ================= */
+@import './views/home/home.css';
+@import './views/home/home-hero.css';
+@import './views/home/home-categories.css';
+@import './views/home/home-featured.css';
+@import './views/home/home-philosophy.css';
+@import './views/home/home-manifesto.css';
 
-/* ========== ANIMACIONES GLOBALES EXTRAS ========== */
-@keyframes shimmer {
-  0% { background-position: -100% 0; }
-  100% { background-position: 100% 0; }
-}
-
-@keyframes float-gentle {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-5px); }
-}
-
-/* ========== UTILIDADES GLOBALES MEJORADAS ========== */
-.text-glow {
-  text-shadow: 0 0 20px rgba(212, 175, 55, 0.5),
-               0 0 40px rgba(212, 175, 55, 0.3);
-}
-
-.text-glow-strong {
-  text-shadow: 
-    0 0 20px rgba(212, 175, 55, 0.8),
-    0 0 40px rgba(212, 175, 55, 0.5),
-    0 0 60px rgba(212, 175, 55, 0.3);
-}
-
-.border-glow {
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
-}
-
-.border-glow-strong {
-  box-shadow: 
-    0 0 20px rgba(212, 175, 55, 0.5),
-    0 0 40px rgba(212, 175, 55, 0.3),
-    inset 0 0 20px rgba(212, 175, 55, 0.1);
-}
-
-.mystical-gradient {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, transparent 100%);
-}
-
-.mystical-gradient-radial {
-  background: radial-gradient(circle at center, rgba(212, 175, 55, 0.1), transparent);
-}
-
-.section-spacing {
-  padding: 5rem 1.5rem;
-}
-
-@media (max-width: 768px) {
-  .section-spacing {
-    padding: 3rem 1rem;
-  }
-}
-
-/* ========== TRANSICIONES DE PÁGINA (Vue Router) ========== */
-.page-enter-active,
-.page-leave-active {
-  transition: all 0.5s ease;
-}
-
-.page-enter-from {
-  opacity: 0;
-  transform: translateY(30px);
-}
-
-.page-leave-to {
-  opacity: 0;
-  transform: translateY(-30px);
-}
-
-/* ========== GLITCH EFFECT MEJORADO ========== */
-.glitch-enhanced {
-  position: relative;
-  display: inline-block;
-}
-
-.glitch-enhanced::before,
-.glitch-enhanced::after {
-  content: attr(data-text);
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: transparent;
-}
-
-.glitch-enhanced::before {
-  left: 2px;
-  text-shadow: -2px 0 #00FFF0;
-  clip: rect(24px, 550px, 90px, 0);
-  animation: glitch-anim-1 3s infinite linear alternate-reverse;
-}
-
-.glitch-enhanced::after {
-  left: -2px;
-  text-shadow: -2px 0 #FF10F0;
-  clip: rect(85px, 550px, 140px, 0);
-  animation: glitch-anim-2 2.5s infinite linear alternate-reverse;
-}
-
-@keyframes glitch-anim-1 {
-  0% { clip: rect(17px, 9999px, 94px, 0); }
-  4.16666667% { clip: rect(40px, 9999px, 66px, 0); }
-  8.33333333% { clip: rect(73px, 9999px, 31px, 0); }
-  12.5% { clip: rect(61px, 9999px, 83px, 0); }
-  16.66666667% { clip: rect(99px, 9999px, 61px, 0); }
-  20.83333333% { clip: rect(43px, 9999px, 14px, 0); }
-  25% { clip: rect(4px, 9999px, 89px, 0); }
-  29.16666667% { clip: rect(34px, 9999px, 73px, 0); }
-  33.33333333% { clip: rect(76px, 9999px, 31px, 0); }
-  37.5% { clip: rect(96px, 9999px, 81px, 0); }
-  41.66666667% { clip: rect(27px, 9999px, 24px, 0); }
-  45.83333333% { clip: rect(53px, 9999px, 41px, 0); }
-  50% { clip: rect(91px, 9999px, 72px, 0); }
-  54.16666667% { clip: rect(6px, 9999px, 100px, 0); }
-  58.33333333% { clip: rect(65px, 9999px, 86px, 0); }
-  62.5% { clip: rect(7px, 9999px, 53px, 0); }
-  66.66666667% { clip: rect(84px, 9999px, 20px, 0); }
-  70.83333333% { clip: rect(47px, 9999px, 99px, 0); }
-  75% { clip: rect(52px, 9999px, 38px, 0); }
-  79.16666667% { clip: rect(19px, 9999px, 27px, 0); }
-  83.33333333% { clip: rect(88px, 9999px, 79px, 0); }
-  87.5% { clip: rect(72px, 9999px, 57px, 0); }
-  91.66666667% { clip: rect(45px, 9999px, 13px, 0); }
-  95.83333333% { clip: rect(15px, 9999px, 70px, 0); }
-  100% { clip: rect(55px, 9999px, 29px, 0); }
-}
-
-@keyframes glitch-anim-2 {
-  0% { clip: rect(65px, 9999px, 100px, 0); }
-  4.16666667% { clip: rect(75px, 9999px, 67px, 0); }
-  8.33333333% { clip: rect(24px, 9999px, 85px, 0); }
-  12.5% { clip: rect(95px, 9999px, 33px, 0); }
-  16.66666667% { clip: rect(45px, 9999px, 26px, 0); }
-  20.83333333% { clip: rect(8px, 9999px, 93px, 0); }
-  25% { clip: rect(82px, 9999px, 47px, 0); }
-  29.16666667% { clip: rect(58px, 9999px, 18px, 0); }
-  33.33333333% { clip: rect(0px, 9999px, 70px, 0); }
-  37.5% { clip: rect(88px, 9999px, 57px, 0); }
-  41.66666667% { clip: rect(12px, 9999px, 98px, 0); }
-  45.83333333% { clip: rect(62px, 9999px, 39px, 0); }
-  50% { clip: rect(34px, 9999px, 73px, 0); }
-  54.16666667% { clip: rect(97px, 9999px, 9px, 0); }
-  58.33333333% { clip: rect(41px, 9999px, 84px, 0); }
-  62.5% { clip: rect(68px, 9999px, 52px, 0); }
-  66.66666667% { clip: rect(22px, 9999px, 90px, 0); }
-  70.83333333% { clip: rect(79px, 9999px, 17px, 0); }
-  75% { clip: rect(91px, 9999px, 61px, 0); }
-  79.16666667% { clip: rect(4px, 9999px, 71px, 0); }
-  83.33333333% { clip: rect(56px, 9999px, 46px, 0); }
-  87.5% { clip: rect(30px, 9999px, 95px, 0); }
-  91.66666667% { clip: rect(85px, 9999px, 23px, 0); }
-  95.83333333% { clip: rect(48px, 9999px, 77px, 0); }
-  100% { clip: rect(11px, 9999px, 94px, 0); }
-}
-
-/* ========== HOLOGRAPHIC TEXT EFFECT ========== */
-.holo-text {
-  background: linear-gradient(
-    45deg,
-    #D4AF37 0%,
-    #FFD700 25%,
-    #00FFF0 50%,
-    #FF10F0 75%,
-    #D4AF37 100%
-  );
-  background-size: 400% 400%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: holoShimmer 3s ease-in-out infinite;
-}
-
-@keyframes holoShimmer {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* ========== CYBER FRAME UTILITY ========== */
-.cyber-frame-enhanced {
-  position: relative;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  clip-path: polygon(
-    0 0, calc(100% - 20px) 0, 100% 20px,
-    100% 100%, 20px 100%, 0 calc(100% - 20px)
-  );
-}
-
-.cyber-frame-enhanced::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  background: linear-gradient(45deg, transparent, rgba(212, 175, 55, 0.5), transparent);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: -1;
-  animation: framePulse 3s ease-in-out infinite;
-}
-
-.cyber-frame-enhanced:hover::before {
-  opacity: 1;
-}
-
-@keyframes framePulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.6; }
-}
-
-/* ========== LOADING SPINNER CYBERPUNK ========== */
-.cyber-loader {
-  width: 50px;
-  height: 50px;
-  border: 3px solid transparent;
-  border-top-color: #D4AF37;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  position: relative;
-}
-
-.cyber-loader::before {
-  content: '';
-  position: absolute;
-  inset: 5px;
-  border: 3px solid transparent;
-  border-top-color: #FFD700;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite reverse;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ========== ACCESSIBILITY ========== */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* ========== PRINT STYLES ========== */
-@media print {
-  .starfield,
-  .scan-lines,
-  .matrix-overlay,
-  .particle-system,
-  .holographic-circle {
-    display: none;
-  }
-}
+@import './views/products.css';
+@import './views/cart.css';
+@import './views/checkout.css';
