@@ -2,25 +2,15 @@
     <component
       :is="tag"
       :class="buttonClasses"
-      :type="type"
-      :disabled="disabled"
+      :href="tag === 'a' ? href : undefined"
+      :target="tag === 'a' ? target : undefined"
+      :rel="tag === 'a' ? rel : undefined"
       @click="handleClick"
     >
-      <span v-if="$slots.icon" class="button__icon button__icon--left">
-        <slot name="icon"></slot>
+      <span class="button-content">
+        <slot />
+        <span v-if="arrow" class="button-arrow">→</span>
       </span>
-      
-      <span class="button__text">
-        <slot></slot>
-      </span>
-      
-      <span v-if="$slots.iconRight || arrow" class="button__icon button__icon--right">
-        <slot name="iconRight">
-          <span v-if="arrow">→</span>
-        </slot>
-      </span>
-      
-      <span class="button__bg"></span>
     </component>
   </template>
   
@@ -28,213 +18,142 @@
   import { computed } from 'vue';
   
   interface Props {
-    variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+    variant?: 'primary' | 'secondary' | 'outline';
     size?: 'sm' | 'md' | 'lg';
     tag?: 'button' | 'a';
-    type?: 'button' | 'submit' | 'reset';
-    disabled?: boolean;
-    fullWidth?: boolean;
     arrow?: boolean;
+    href?: string;
+    target?: string;
+    rel?: string;
   }
   
   const props = withDefaults(defineProps<Props>(), {
     variant: 'primary',
     size: 'md',
     tag: 'button',
-    type: 'button',
-    disabled: false,
-    fullWidth: false,
-    arrow: false,
+    arrow: false
   });
   
   const emit = defineEmits<{
-    (e: 'click', event: MouseEvent): void;
+    click: [event: Event];
   }>();
   
-  const buttonClasses = computed(() => [
-    'base-button',
-    `base-button--${props.variant}`,
-    `base-button--${props.size}`,
-    {
-      'base-button--disabled': props.disabled,
-      'base-button--full-width': props.fullWidth,
-    },
-  ]);
+  const buttonClasses = computed(() => {
+    return [
+      'base-button',
+      `base-button--${props.variant}`,
+      `base-button--${props.size}`
+    ];
+  });
   
-  const handleClick = (event: MouseEvent) => {
-    if (!props.disabled) {
-      emit('click', event);
-    }
+  const handleClick = (event: Event) => {
+    emit('click', event);
   };
   </script>
   
   <style scoped>
-  /* ========== BASE BUTTON ========== */
   .base-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--spacing-md);
-    font-family: var(--font-heading);
-    font-weight: var(--font-weight-medium);
-    letter-spacing: var(--letter-spacing-widest);
+    padding: 1rem 2rem;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 700;
     text-transform: uppercase;
-    text-decoration: none;
-    border: none;
+    letter-spacing: 0.1em;
+    border-radius: 50px;
+    border: 2px solid transparent;
     cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
     position: relative;
     overflow: hidden;
-    transition: all var(--transition-base) var(--ease-smooth);
-    white-space: nowrap;
   }
   
-  .base-button:disabled,
-  .base-button--disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-  
-  /* ========== SIZES ========== */
-  .base-button--sm {
-    padding: var(--spacing-sm) var(--spacing-lg);
-    font-size: var(--font-size-xs);
-  }
-  
-  .base-button--md {
-    padding: var(--spacing-md) var(--spacing-2xl);
-    font-size: var(--font-size-sm);
-  }
-  
-  .base-button--lg {
-    padding: var(--spacing-lg) var(--spacing-3xl);
-    font-size: var(--font-size-base);
-  }
-  
-  /* ========== VARIANTS ========== */
-  
-  /* Primary (Gold Filled) */
-  .base-button--primary {
-    background: transparent;
-    border: 2px solid var(--color-gold-primary);
-    color: var(--color-white);
-    clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
-  }
-  
-  .base-button--primary .button__bg {
+  .base-button::before {
+    content: '';
     position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, var(--color-gold-primary), var(--color-gold-light));
-    transform: translateX(-100%);
-    transition: transform var(--transition-base) var(--ease-smooth);
-    z-index: -1;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
   }
   
-  .base-button--primary:hover:not(:disabled) {
-    color: var(--color-black);
-    border-color: var(--color-gold-light);
-    box-shadow: var(--shadow-gold-lg);
-    transform: translateY(-2px);
+  .base-button:hover::before {
+    width: 300px;
+    height: 300px;
   }
   
-  .base-button--primary:hover:not(:disabled) .button__bg {
-    transform: translateX(0);
-  }
-  
-  /* Secondary (Outline) */
-  .base-button--secondary {
-    background: transparent;
-    border: 2px solid rgba(212, 175, 55, 0.5);
-    color: var(--color-gold-primary);
-    clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
-  }
-  
-  .base-button--secondary .button__bg {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(255, 215, 0, 0.2));
-    transform: translateY(100%);
-    transition: transform var(--transition-base) var(--ease-smooth);
-    z-index: -1;
-  }
-  
-  .base-button--secondary:hover:not(:disabled) {
-    border-color: var(--color-gold-light);
-    color: var(--color-gold-light);
-    box-shadow: var(--shadow-gold-md);
-    transform: translateY(-3px);
-  }
-  
-  .base-button--secondary:hover:not(:disabled) .button__bg {
-    transform: translateY(0);
-  }
-  
-  /* Outline */
-  .base-button--outline {
-    background: transparent;
-    border: 1px solid rgba(212, 175, 55, 0.5);
-    color: var(--color-white);
-  }
-  
-  .base-button--outline:hover:not(:disabled) {
-    border-color: var(--color-gold-primary);
-    color: var(--color-gold-primary);
-    box-shadow: var(--shadow-gold-sm);
-  }
-  
-  /* Ghost */
-  .base-button--ghost {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-  }
-  
-  .base-button--ghost:hover:not(:disabled) {
-    color: var(--color-gold-primary);
-    text-shadow: var(--text-shadow-gold);
-  }
-  
-  /* ========== ICON STYLING ========== */
-  .button__icon {
+  .button-content {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
-    justify-content: center;
-    transition: transform var(--transition-base) var(--ease-out);
+    gap: 0.5rem;
   }
   
-  .base-button:hover:not(:disabled) .button__icon--right {
+  .button-arrow {
+    transition: transform 0.3s ease;
+  }
+  
+  .base-button:hover .button-arrow {
     transform: translateX(5px);
   }
   
-  .base-button:hover:not(:disabled) .button__icon--left {
-    transform: translateX(-5px);
+  /* Variants */
+  .base-button--primary {
+    background: linear-gradient(135deg, #DAA520 0%, #FFD700 100%);
+    color: #000;
+    border-color: #DAA520;
+    box-shadow: 0 0 20px rgba(218, 165, 32, 0.4);
   }
   
-  /* ========== TEXT ========== */
-  .button__text {
-    position: relative;
-    z-index: 1;
+  .base-button--primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 40px rgba(218, 165, 32, 0.6);
   }
   
-  /* ========== FULL WIDTH ========== */
-  .base-button--full-width {
-    width: 100%;
+  .base-button--secondary {
+    background: transparent;
+    border: 2px solid #DAA520;
+    color: #DAA520;
   }
   
-  /* ========== RESPONSIVE ========== */
-  @media (max-width: 768px) {
-    .base-button--sm {
-      padding: 0.5rem 1rem;
-      font-size: 0.625rem;
-    }
+  .base-button--secondary:hover {
+    background: rgba(218, 165, 32, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(218, 165, 32, 0.3);
+  }
   
-    .base-button--md {
-      padding: 0.75rem 1.5rem;
-      font-size: 0.75rem;
-    }
+  .base-button--outline {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+  }
   
-    .base-button--lg {
-      padding: 1rem 2rem;
-      font-size: 0.875rem;
-    }
+  .base-button--outline:hover {
+    border-color: #DAA520;
+    color: #DAA520;
+  }
+  
+  /* Sizes */
+  .base-button--sm {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .base-button--md {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+  }
+  
+  .base-button--lg {
+    padding: 1.25rem 2.5rem;
+    font-size: 1.125rem;
   }
   </style>
+  
