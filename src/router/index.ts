@@ -14,6 +14,13 @@ const router = createRouter({
       component: HomeView,
     },
 
+    // ==================== CATÁLOGO ====================
+    {
+      path: '/catalogo',
+      name: 'catalogo',
+      component: () => import('@/views/cart/CatalogoView.vue'),
+    },
+
     // ==================== PRODUCTOS ====================
     {
       path: '/productos',
@@ -36,37 +43,33 @@ const router = createRouter({
     },
 
     // ==================== CATEGORÍAS ====================
-    // Temporalmente redirigir a productos con filtro
+    // Redirect de categorías al catálogo con filtro
     {
       path: '/categoria/:categoria',
       redirect: to => ({
-        name: 'productos',
+        name: 'catalogo',
         query: { categoria: to.params.categoria }
       })
     },
     // Rutas específicas que usa HomeView
     {
       path: '/categoria/remeras',
-      redirect: { name: 'productos', query: { categoria: 'remeras' } }
+      redirect: { name: 'catalogo', query: { categoria: 'remeras' } }
     },
     {
       path: '/categoria/buzos',
-      redirect: { name: 'productos', query: { categoria: 'buzos' } }
+      redirect: { name: 'catalogo', query: { categoria: 'buzos' } }
     },
     {
       path: '/categoria/pantalones',
-      redirect: { name: 'productos', query: { categoria: 'pantalones' } }
+      redirect: { name: 'catalogo', query: { categoria: 'pantalones' } }
     },
 
-    // ==================== CATÁLOGO/COLECCIÓN ====================
-    // Redirect de colección a productos
+    // ==================== COLECCIÓN ====================
+    // Redirect de colección a catálogo
     {
       path: '/coleccion',
-      redirect: { name: 'productos' }
-    },
-    {
-      path: '/catalogo',
-      redirect: { name: 'productos' }
+      redirect: { name: 'catalogo' }
     },
 
     // ==================== CARRITO ====================
@@ -83,24 +86,25 @@ const router = createRouter({
       component: () => import('@/views/checkout/CheckoutView.vue'),
     },
 
+    // ==================== NOTICIAS ====================
+    {
+      path: '/noticias',
+      name: 'noticias',
+      component: () => import('@/views/noticias/NoticiasView.vue'),
+    },
+
     // ==================== RUTAS TEMPORALES ====================
-    // Estas rutas redirigen a home hasta que crees las vistas
+    // Estas rutas redirigen hasta que crees las vistas
     
     {
       path: '/filosofia',
       name: 'filosofia',
-      // Temporalmente redirige a about
-      redirect: { name: 'about' }
+      // Temporalmente redirige a home
+      redirect: { name: 'home' }
     },
     {
       path: '/contacto',
       name: 'contacto',
-      // Temporalmente redirige a about
-      redirect: { name: 'about' }
-    },
-    {
-      path: '/noticias',
-      name: 'noticias',
       // Temporalmente redirige a home
       redirect: { name: 'home' }
     },

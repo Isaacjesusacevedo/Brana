@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import type { CarouselItem } from '@/types/Index'
 
 interface Props {
@@ -83,11 +83,20 @@ const carruselCircle = ref<HTMLElement | null>(null)
 const rotation = ref(0)
 let autoRotateTimer: number | null = null
 
+// Radius adaptativo según viewport
+const getRadius = () => {
+  if (typeof window === 'undefined') return 280
+  const width = window.innerWidth
+  if (width <= 640) return 160 // Móvil
+  if (width <= 1024) return 220 // Tablet
+  return 280 // Desktop
+}
+
 const getItemPosition = (index: number) => {
   const totalItems = props.items.length
   const angle = (index * 360) / totalItems - rotation.value
   const angleRad = (angle * Math.PI) / 180
-  const radius = 280
+  const radius = getRadius()
   
   const x = Math.cos(angleRad) * radius
   const y = Math.sin(angleRad) * radius
@@ -423,34 +432,216 @@ onUnmounted(() => {
   background: rgba(218, 165, 32, 0.5);
 }
 
-@media (max-width: 768px) {
+/* Tablet (641px - 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .carrusel-container {
+    padding: 3rem 0;
+  }
+
   .carrusel-wrapper {
-    height: 500px;
+    height: 480px;
   }
   
   .carrusel-item {
-    width: 150px;
-    height: 210px;
-    margin: -105px 0 0 -75px;
+    width: 160px;
+    height: 224px;
+    margin: -112px 0 0 -80px;
+  }
+
+  .item-overlay {
+    padding: 1.2rem;
+  }
+
+  .item-categoria {
+    font-size: 0.7rem;
+  }
+
+  .item-titulo {
+    font-size: 1rem;
+  }
+
+  .item-symbol {
+    font-size: 1.1rem;
   }
   
   .center-circle {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
   }
   
   .center-symbol {
-    font-size: 1.8rem;
+    font-size: 2rem;
   }
   
   .center-text {
-    font-size: 0.7rem;
+    font-size: 0.8rem;
+  }
+
+  .carrusel-controls {
+    gap: 2.5rem;
+    margin-top: 2.5rem;
+  }
+  
+  .control-btn {
+    width: 45px;
+    height: 45px;
+    font-size: 1.3rem;
+  }
+
+  .control-info {
+    font-size: 1.1rem;
+  }
+
+  .carrusel-indicators {
+    gap: 0.8rem;
+    margin-top: 1.8rem;
+  }
+
+  .indicator {
+    width: 35px;
+  }
+}
+
+/* Móvil (<= 640px) */
+@media (max-width: 640px) {
+  .carrusel-container {
+    padding: 2.5rem 0;
+  }
+
+  .carrusel-wrapper {
+    height: 380px;
+  }
+  
+  .carrusel-item {
+    width: 120px;
+    height: 168px;
+    margin: -84px 0 0 -60px;
+  }
+
+  .item-overlay {
+    padding: 1rem;
+    opacity: 1;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.92) 0%,
+      rgba(0, 0, 0, 0.5) 60%,
+      transparent 100%
+    );
+  }
+
+  .item-card {
+    border-radius: 10px;
+  }
+
+  .item-image {
+    border-radius: 10px;
+  }
+
+  .item-categoria {
+    font-size: 0.65rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .item-titulo {
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
+
+  .item-symbol {
+    font-size: 0.9rem;
+    margin-top: 0.3rem;
+  }
+  
+  .center-circle {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .center-symbol {
+    font-size: 1.5rem;
+    margin-bottom: 0.2rem;
+  }
+  
+  .center-text {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+  }
+
+  .carrusel-controls {
+    gap: 2rem;
+    margin-top: 2rem;
   }
   
   .control-btn {
     width: 40px;
     height: 40px;
+    font-size: 1.1rem;
+  }
+
+  .control-info {
+    font-size: 1rem;
+  }
+
+  .separator {
+    margin: 0 0.3rem;
+  }
+
+  .carrusel-indicators {
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+  }
+
+  .indicator {
+    width: 28px;
+    height: 3px;
+  }
+}
+
+/* Móvil Pequeño (<= 375px) */
+@media (max-width: 375px) {
+  .carrusel-wrapper {
+    height: 350px;
+  }
+
+  .carrusel-item {
+    width: 100px;
+    height: 140px;
+    margin: -70px 0 0 -50px;
+  }
+
+  .item-overlay {
+    padding: 0.8rem;
+  }
+
+  .item-titulo {
+    font-size: 0.75rem;
+  }
+
+  .center-circle {
+    width: 60px;
+    height: 60px;
+  }
+
+  .center-symbol {
     font-size: 1.2rem;
+  }
+
+  .center-text {
+    font-size: 0.6rem;
+  }
+
+  .control-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .control-info {
+    font-size: 0.9rem;
+  }
+
+  .indicator {
+    width: 24px;
   }
 }
 </style>

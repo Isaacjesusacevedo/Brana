@@ -20,9 +20,9 @@
       </div>
       <p class="hero-subtitle" v-html="subtitle"></p>
       <div class="hero-cta">
-        <router-link :to="primaryCta.route" class="cta-button primary">
+        <a :href="primaryCta.route" target="_blank" rel="noopener noreferrer" class="cta-button primary">
           {{ primaryCta.text }} →
-        </router-link>
+        </a>
         <router-link :to="secondaryCta.route" class="cta-button secondary">
           {{ secondaryCta.text }}
         </router-link>
@@ -52,7 +52,7 @@ interface Props {
 withDefaults(defineProps<Props>(), {
   title: 'BRANA',
   subtitle: 'HIPERSTICIÓN <span class="highlight">VESTIBLE</span><br />PARA LA <span class="highlight">GENERACIÓN</span> ETERNA.',
-  primaryCta: () => ({ text: 'EXPLORAR_COLECCIÓN', route: '/coleccion' }),
+  primaryCta: () => ({ text: 'EXPLORAR_COLECCIÓN', route: 'https://www.instagram.com/brana_eg/' }),
   secondaryCta: () => ({ text: 'NUESTRA FILOSOFÍA', route: '/filosofia' }),
 });
 
@@ -312,45 +312,167 @@ const getSymbolStyle = (n: number) => {
   }
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* Tablet (641px - 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
   .hero-section {
-    min-height: 80vh;
-    padding: 6rem 1rem 3rem;
+    padding: 6rem 1.5rem 3rem;
   }
 
   .black-hole-symbol {
-    margin-bottom: 3rem;
+    top: 12%;
   }
 
   .black-hole-core {
-    width: 150px;
-    height: 150px;
+    width: 180px;
+    height: 180px;
   }
 
   .event-horizon {
-    width: 90px;
-    height: 90px;
+    width: 100px;
+    height: 100px;
   }
 
   .accretion-disk,
   .accretion-disk::before {
-    width: 150px;
-    height: 150px;
+    width: 180px;
+    height: 180px;
   }
 
   .diamond-symbol {
-    font-size: 2.2rem;
+    font-size: 2.5rem;
+  }
+
+  .hero-content {
+    margin-top: 10rem;
+    padding: 0 1rem;
+  }
+
+  .hero-title {
+    font-size: clamp(3rem, 8vw, 6rem);
+    letter-spacing: 0.2em;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+  }
+
+  .cta-button {
+    padding: 1rem 2.5rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* Móvil (<= 640px) */
+@media (max-width: 640px) {
+  .hero-section {
+    min-height: 75vh;
+    padding: 3rem 1.5rem 2rem;
+  }
+
+  .black-hole-symbol {
+    top: 5%;
+    margin-bottom: 1.5rem;
+  }
+
+  .black-hole-core {
+    width: 100px;
+    height: 100px;
+  }
+
+  .event-horizon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .accretion-disk,
+  .accretion-disk::before {
+    width: 100px;
+    height: 100px;
+  }
+
+  .diamond-symbol {
+    font-size: 1.5rem;
+  }
+
+  .hero-content {
+    margin-top: 5rem;
+    padding: 0;
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 10vw, 2.8rem);
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+  }
+
+  .hero-divider {
+    gap: 0.5rem;
+    margin: 1.5rem 0;
+  }
+
+  .divider-icon {
+    font-size: 1.2rem;
+  }
+
+  .divider-line {
+    width: 40px;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1rem, 4vw, 1.2rem);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    letter-spacing: 0.05em;
   }
 
   .hero-cta {
     flex-direction: column;
     align-items: center;
+    gap: 1rem;
   }
 
   .cta-button {
     width: 100%;
-    max-width: 300px;
+    max-width: 320px;
+    padding: 1rem 2rem;
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+  }
+
+  .floating-symbols .symbol {
+    font-size: 0.8rem;
+  }
+}
+
+/* Móvil pequeño (<= 375px) */
+@media (max-width: 375px) {
+  .hero-section {
+    padding: 3rem 0.75rem 1.5rem;
+  }
+
+  .black-hole-core {
+    width: 100px;
+    height: 100px;
+  }
+
+  .event-horizon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .accretion-disk,
+  .accretion-disk::before {
+    width: 100px;
+    height: 100px;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .cta-button {
+    max-width: 280px;
+    padding: 0.9rem 1.5rem;
   }
 }
 </style>

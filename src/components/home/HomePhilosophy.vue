@@ -142,19 +142,121 @@ withDefaults(defineProps<Props>(), {
   box-shadow: 0 15px 40px rgba(218, 165, 32, 0.4);
 }
 
-@media (max-width: 768px) {
+/* Tablet (641px - 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
   .section-wrapper {
-    padding: 4rem 1rem;
+    padding: 5rem 1.5rem;
   }
 
   .philosophy-section {
-    padding: 4rem 2rem;
+    padding: 4rem 3rem;
   }
 
   .philosophy-decoration-image {
-    right: -30%;
-    width: 400px;
-    height: 400px;
+    width: 450px;
+    height: 450px;
+    right: -15%;
+  }
+
+  .philosophy-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .philosophy-title {
+    font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+    margin-bottom: 1.5rem;
+  }
+
+  .philosophy-text {
+    font-size: 1.1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .cta-button {
+    padding: 1rem 2.5rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* Móvil (<= 640px) */
+@media (max-width: 640px) {
+  .section-wrapper {
+    padding: 4rem 1.5rem;
+  }
+
+  .philosophy-section {
+    padding: 3rem 1.5rem;
+    border-radius: 16px;
+  }
+
+  .philosophy-decoration-image {
+    right: -40%;
+    width: 280px;
+    height: 280px;
+    opacity: 0.08;
+  }
+
+  .philosophy-content {
+    max-width: 100%;
+  }
+
+  .philosophy-icon {
+    font-size: 2.8rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .philosophy-title {
+    font-size: clamp(1.4rem, 6.5vw, 1.8rem);
+    letter-spacing: 0.12em;
+    margin-bottom: 1.2rem;
+  }
+
+  .philosophy-text {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    padding: 0 0.5rem;
+  }
+
+  .cta-button {
+    width: 100%;
+    max-width: 320px;
+    padding: 1rem 2rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Móvil pequeño (<= 375px) */
+@media (max-width: 375px) {
+  .section-wrapper {
+    padding: 2.5rem 0.75rem;
+  }
+
+  .philosophy-section {
+    padding: 2.5rem 1.2rem;
+  }
+
+  .philosophy-decoration-image {
+    width: 250px;
+    height: 250px;
+  }
+
+  .philosophy-icon {
+    font-size: 2.5rem;
+  }
+
+  .philosophy-title {
+    font-size: 1.4rem;
+  }
+
+  .philosophy-text {
+    font-size: 0.95rem;
+  }
+
+  .cta-button {
+    max-width: 280px;
+    padding: 0.9rem 1.8rem;
   }
 }
 </style>

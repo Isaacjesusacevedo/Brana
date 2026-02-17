@@ -503,7 +503,17 @@ const handleNewsletter = (email: string) => {
   50% { transform: translate(40px, -20px) rotate(15deg); }
 }
 
-@media (max-width: 768px) {
+/* Tablet (641px - 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .decoration {
+    width: 200px;
+    height: 200px;
+    opacity: 0.8;
+  }
+}
+
+/* Móvil (<= 640px) */
+@media (max-width: 640px) {
   .decoration {
     display: none;
   }

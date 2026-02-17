@@ -51,9 +51,61 @@ withDefaults(defineProps<Props>(), {
   margin: 0;
 }
 
-@media (max-width: 768px) {
+/* Tablet (641px - 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .categories-container {
+    padding: 3rem 0;
+  }
+
+  .categories-intro {
+    margin-bottom: 4rem;
+    padding: 0 1.5rem;
+  }
+
+  .intro-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+  }
+
+  .intro-text {
+    font-size: 1.1rem;
+  }
+}
+
+/* Móvil (<= 640px) */
+@media (max-width: 640px) {
+  .categories-container {
+    padding: 3rem 0;
+  }
+
   .categories-intro {
     margin-bottom: 3rem;
+    padding: 0 1.5rem;
+  }
+
+  .intro-title {
+    font-size: clamp(1.6rem, 7vw, 2rem);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.75rem;
+  }
+
+  .intro-text {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+}
+
+/* Móvil pequeño (<= 375px) */
+@media (max-width: 375px) {
+  .categories-intro {
+    padding: 0 0.75rem;
+  }
+
+  .intro-title {
+    font-size: 1.6rem;
+  }
+
+  .intro-text {
+    font-size: 0.95rem;
   }
 }
 </style>

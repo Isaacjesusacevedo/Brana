@@ -28,10 +28,14 @@
       <!-- Menú Desktop -->
       <nav class="menu desktop-menu">
         <RouterLink to="/noticias" class="menu-link">NOTICIAS</RouterLink>
-        <RouterLink to="/catalogo" class="menu-link icon-link">
+        <RouterLink to="/catalogo" class="menu-link icon-link" title="Catálogo">
           <el-icon :size="22"><ShoppingBag /></el-icon>
         </RouterLink>
-        <RouterLink to="/contacto" class="menu-link icon-link">
+        <RouterLink to="/carrito" class="menu-link icon-link cart-link" title="Carrito">
+          <el-icon :size="22"><ShoppingTrolley /></el-icon>
+          <span v-if="cartItemsCount > 0" class="cart-badge">{{ cartItemsCount }}</span>
+        </RouterLink>
+        <RouterLink to="/contacto" class="menu-link icon-link" title="Contacto">
           <el-icon :size="22"><Message /></el-icon>
         </RouterLink>
       </nav>
@@ -51,11 +55,17 @@
       <div v-if="mobileMenuOpen" class="mobile-menu">
         <nav class="mobile-nav">
           <RouterLink to="/noticias" class="mobile-link" @click="mobileMenuOpen = false">
-            NOTICIAS
+            <el-icon :size="20"><Document /></el-icon>
+            <span>NOTICIAS</span>
           </RouterLink>
           <RouterLink to="/catalogo" class="mobile-link" @click="mobileMenuOpen = false">
             <el-icon :size="20"><ShoppingBag /></el-icon>
             <span>CATÁLOGO</span>
+          </RouterLink>
+          <RouterLink to="/carrito" class="mobile-link cart-mobile" @click="mobileMenuOpen = false">
+            <el-icon :size="20"><ShoppingTrolley /></el-icon>
+            <span>CARRITO</span>
+            <span v-if="cartItemsCount > 0" class="cart-badge-mobile">{{ cartItemsCount }}</span>
           </RouterLink>
           <RouterLink to="/contacto" class="mobile-link" @click="mobileMenuOpen = false">
             <el-icon :size="20"><Message /></el-icon>
@@ -68,12 +78,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import { ShoppingBag, Message, Expand, Fold } from '@element-plus/icons-vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ShoppingBag, Message, Expand, Fold, ShoppingTrolley, Document } from '@element-plus/icons-vue';
 
 const currentMessage = ref(0);
 const isScrolled = ref(false);
 const mobileMenuOpen = ref(false);
+
+// Cart items count - esto debería venir de tu store (Pinia/Vuex)
+// Por ahora es un valor de ejemplo
+const cartItemsCount = computed(() => {
+  // TODO: Conectar con tu store de carrito
+  // return useCartStore().itemsCount
+  return 0; // Cambiar por el valor real
+});
 
 const hyperstitionMessages = [
   "HYPERSTITION CLUB",
@@ -277,6 +295,32 @@ onUnmounted(() => {
   transform: scale(1.1);
 }
 
+/* Cart Link con Badge */
+.cart-link {
+  position: relative;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ff4444;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  border: 2px solid var(--navbar-bg);
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
 /* Menú móvil toggle */
 .mobile-menu-toggle {
   display: none;
@@ -319,12 +363,30 @@ onUnmounted(() => {
   letter-spacing: 0.1em;
   border-radius: 8px;
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .mobile-link:hover {
   background: rgba(218, 165, 32, 0.1);
   color: var(--gold);
   transform: translateX(5px);
+}
+
+/* Cart Mobile Badge */
+.cart-mobile {
+  justify-content: space-between;
+}
+
+.cart-badge-mobile {
+  background: #ff4444;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  min-width: 24px;
+  text-align: center;
+  margin-left: auto;
 }
 
 /* Transiciones */
