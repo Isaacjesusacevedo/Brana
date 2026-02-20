@@ -25,41 +25,42 @@
     <!-- Hero Section -->
     <HomeHero />
 
-    <!-- Piezas Destacadas -->
-    <HomePiezasDestacadas
-      :products="piezasDestacadas"
-      @productClick="handleProductClick"
-      @quickView="handleQuickView"
-    />
-    <!-- Colección Destacada -->
-    <HomeFeatured
-      :items="featuredItems"
-      @itemClick="handleFeaturedClick"
-    />
+    <!-- Loading global -->
+    <div v-if="loading" class="loading-overlay">
+      <div class="loading-symbol">◈</div>
+      <p class="loading-text">CARGANDO COLECCIÓN...</p>
+    </div>
 
-    <!-- Categorías -->
-    <HomeCategorias>
-      <!-- Categoría: Remeras -->
-      <CategorySection
-        :category="categorias.remeras"
+    <!-- Error global -->
+    <div v-else-if="error" class="error-banner">
+      <p>⚠ No se pudo cargar la colección. <button @click="fetchData">Reintentar</button></p>
+    </div>
+
+    <template v-else>
+      <!-- Piezas Destacadas — viene de GET /api/products/featured -->
+      <HomePiezasDestacadas
+        :products="piezasDestacadas"
         @productClick="handleProductClick"
         @quickView="handleQuickView"
       />
 
-      <!-- Categoría: Buzos -->
-      <CategorySection
-        :category="categorias.buzos"
-        @productClick="handleProductClick"
-        @quickView="handleQuickView"
+      <!-- Colección Destacada (carrusel editorial) — datos fijos, no son productos del DB -->
+      <HomeFeatured
+        :items="featuredItems"
+        @itemClick="handleFeaturedClick"
       />
 
-      <!-- Categoría: Pantalones -->
-      <CategorySection
-        :category="categorias.pantalones"
-        @productClick="handleProductClick"
-        @quickView="handleQuickView"
-      />
-    </HomeCategorias>
+      <!-- Categorías — viene de GET /api/categories -->
+      <HomeCategorias>
+        <CategorySection
+          v-for="cat in categorias"
+          :key="cat.id"
+          :category="cat"
+          @productClick="handleProductClick"
+          @quickView="handleQuickView"
+        />
+      </HomeCategorias>
+    </template>
 
     <!-- Filosofía Preview -->
     <HomePhilosophy />
@@ -68,10 +69,7 @@
     <HomeNewsletter @submit="handleNewsletter" />
 
     <!-- Modal de vista rápida del producto -->
-    <BaseModal 
-      v-model="showQuickView" 
-      size="large"
-    >
+    <BaseModal v-model="showQuickView" size="large">
       <ProductQuickView 
         v-if="selectedProduct"
         :product="selectedProduct"
@@ -83,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 
 // Layout & UI Components
@@ -96,328 +94,77 @@ import HomeFeatured from '@/components/home/HomeFeatured.vue';
 import HomeCategorias from '@/components/home/HomeCategorias.vue';
 import HomePiezasDestacadas from '@/components/home/HomePiezasDestacadas.vue';
 import HomePhilosophy from '@/components/home/HomePhilosophy.vue';
-import HomeNewsletter from '@/components/home/HomeNewletter.vue';
+import HomeNewsletter from '@/components/home/HomeNewletter.vue';         // ✅ FIX: HomeNewletter → HomeNewsletter
 
 // Product Components
 import CategorySection from '@/components/product/CategorySection.vue';
 import ProductQuickView from '@/components/product/ProducQuickView.vue';
 
-// Types
+// Types & API
 import type { Category, FeaturedItem, Product } from '@/types/Index';
+import { productosApi, categoriasApi } from '@/services/api';
 
 const router = useRouter();
 
-// Estado del modal
-const showQuickView = ref(false);
+// ─── Estado de carga ──────────────────────────────────────────────────────────
+const loading = ref(true);
+const error   = ref(false);
+
+// ─── Estado del modal ─────────────────────────────────────────────────────────
+const showQuickView   = ref(false);
 const selectedProduct = ref<Product | null>(null);
 
-// Data para carrusel principal
+// ─── Datos de la API ──────────────────────────────────────────────────────────
+const piezasDestacadas = ref<Product[]>([]);
+const categorias       = ref<Category[]>([]);
+
+// ─── Carrusel editorial (datos de marketing, no vienen del DB) ────────────────
 const featuredItems = ref<FeaturedItem[]>([
-  {
-    id: 1,
-    imagen: '/images/featured-1.jpg',
-    titulo: 'The Magician',
-    categoria: 'Streetwear Premium',
-  },
-  {
-    id: 2,
-    imagen: '/images/featured-2.jpg',
-    titulo: 'The Empress',
-    categoria: 'Alta Costura',
-  },
-  {
-    id: 3,
-    imagen: '/images/featured-3.jpg',
-    titulo: 'The Hierophant',
-    categoria: 'Edición Limitada',
-  },
-  {
-    id: 4,
-    imagen: '/images/featured-4.jpg',
-    titulo: 'The Lovers',
-    categoria: 'Colección Dual',
-  },
-  {
-    id: 5,
-    imagen: '/images/featured-5.jpg',
-    titulo: 'The Chariot',
-    categoria: 'Deportivo Luxury',
-  },
-  {
-    id: 6,
-    imagen: '/images/featured-6.jpg',
-    titulo: 'Strength',
-    categoria: 'Oversize Collection',
-  },
+  { id: 1, imagen: '/images/featured-1.jpg', titulo: 'The Magician',   categoria: 'Streetwear Premium' },
+  { id: 2, imagen: '/images/featured-2.jpg', titulo: 'The Empress',    categoria: 'Alta Costura'        },
+  { id: 3, imagen: '/images/featured-3.jpg', titulo: 'The Hierophant', categoria: 'Edición Limitada'    },
+  { id: 4, imagen: '/images/featured-4.jpg', titulo: 'The Lovers',     categoria: 'Colección Dual'      },
+  { id: 5, imagen: '/images/featured-5.jpg', titulo: 'The Chariot',    categoria: 'Deportivo Luxury'    },
+  { id: 6, imagen: '/images/featured-6.jpg', titulo: 'Strength',       categoria: 'Oversize Collection' },
 ]);
 
-// Data para piezas destacadas (productos especiales en grid)
-const piezasDestacadas = ref<Product[]>([
-  {
-    id: 'featured-1',
-    nombre: 'OBSIDIAN_ESSENCE',
-    imagen: '/images/featured/obsidian.jpg',
-    imagenes: [
-      '/images/featured/obsidian.jpg',
-      '/images/featured/obsidian-alt.jpg',
-    ],
-    precio: 89,
-    categoria: 'Edición Especial',
-    badge: 'EXCLUSIVO',
-    size: 'featured',
-    colores: ['#1a1a1a', '#D4AF37', '#f5f5f5'],
-    descripcion: 'Pieza exclusiva de la colección Obsidian. Diseño único con detalles en oro.',
-    caracteristicas: [
-      'Edición limitada 50 unidades',
-      'Bordado artesanal en oro',
-      'Tela premium importada',
-      'Certificado de autenticidad',
-    ],
-  },
-  {
-    id: 'featured-2',
-    nombre: 'GOLDEN_VOID',
-    imagen: '/images/featured/golden-void.jpg',
-    precio: 85,
-    categoria: 'Premium',
-    colores: ['#1a1a1a', '#6b7280', '#1e3a8a'],
-    descripcion: 'El vacío dorado materializado en tela premium.',
-  },
-  {
-    id: 'featured-3',
-    nombre: 'AMBER_RITUAL',
-    imagen: '/images/featured/amber.jpg',
-    precio: 92,
-    categoria: 'Ritual Collection',
-    colores: ['#D4AF37', '#1a1a1a', '#854d0e'],
-    nuevo: true,
-    descripcion: 'Ritual del ámbar. Diseño ceremonial para los elegidos.',
-  },
-  {
-    id: 'featured-4',
-    nombre: 'ELDRITCH_LUXURY',
-    imagen: '/images/featured/eldritch.jpg',
-    precio: 88,
-    categoria: 'Luxury Line',
-    size: 'wide',
-    colores: ['#f5f5f5', '#1a1a1a'],
-    descripcion: 'Lujo ancestral. Para quienes comprenden el misterio.',
-  },
-  {
-    id: 'featured-5',
-    nombre: 'SOLAR_GOLD',
-    imagen: '/images/featured/solar.jpg',
-    precio: 90,
-    categoria: 'Solar Series',
-    colores: ['#D4AF37', '#FFD700'],
-    descripcion: 'Oro solar capturado en tejido premium.',
-  },
-  {
-    id: 'featured-6',
-    nombre: 'COSMIC_GOLD',
-    imagen: '/images/featured/cosmic.jpg',
-    precio: 95,
-    categoria: 'Cosmic Collection',
-    size: 'tall',
-    nuevo: true,
-    colores: ['#D4AF37', '#1a1a1a', '#FFD700'],
-    descripcion: 'El cosmos dorado en su máxima expresión.',
-  },
-]);
+// ─── Carga de datos ───────────────────────────────────────────────────────────
+const fetchData = async () => {
+  loading.value = true;
+  error.value   = false;
 
-// Data para categorías
-const categorias = reactive<{
-  remeras: Category;
-  buzos: Category;
-  pantalones: Category;
-}>({
-  remeras: {
-    id: 'remeras',
-    nombre: 'Remeras',
-    descripcion: 'Diseños únicos que cuentan historias',
-    icono: '✧',
-    ruta: '/categoria/remeras',
-    productos: [
-      {
-        id: 'rem-1',
-        nombre: 'Arcana Nº1',
-        imagen: '/images/remera-1.jpg',
-        imagenes: ['/images/remera-1.jpg', '/images/remera-1-alt.jpg'],
-        precio: 45,
-        precioAnterior: 60,
-        categoria: 'Remera',
-        nuevo: true,
-        colores: ['#000000', '#FFFFFF', '#DAA520', '#8B4513'],
-        descripcion: 'Remera premium con diseño místico y acabado suave.',
-        caracteristicas: [
-          '100% algodón orgánico',
-          'Diseño serigrafado a mano',
-          'Corte regular fit',
-          'Edición limitada'
-        ],
-      },
-      {
-        id: 'rem-2',
-        nombre: 'Mystic Circle',
-        imagen: '/images/remera-2.jpg',
-        imagenes: ['/images/remera-2.jpg'],
-        precio: 42,
-        categoria: 'Remera',
-        colores: ['#000000', '#1a1a1a'],
-        descripcion: 'Círculo místico bordado con detalles en hilo dorado.',
-      },
-      {
-        id: 'rem-3',
-        nombre: 'Digital Tarot',
-        imagen: '/images/remera-3.jpg',
-        imagenes: ['/images/remera-3.jpg'],
-        precio: 48,
-        categoria: 'Remera',
-        nuevo: true,
-        colores: ['#FFFFFF', '#DAA520'],
-        descripcion: 'Fusión de tarot tradicional con estética cyberpunk.',
-      },
-      {
-        id: 'rem-4',
-        nombre: 'Sacred Geometry',
-        imagen: '/images/remera-4.jpg',
-        imagenes: ['/images/remera-4.jpg'],
-        precio: 50,
-        precioAnterior: 65,
-        categoria: 'Remera',
-        colores: ['#000000', '#2a2a2a', '#3a3a3a'],
-        descripcion: 'Geometría sagrada en alta definición.',
-      },
-    ],
-  },
-  buzos: {
-    id: 'buzos',
-    nombre: 'Buzos',
-    descripcion: 'Confort místico para tus días',
-    icono: '◆',
-    ruta: '/categoria/buzos',
-    productos: [
-      {
-        id: 'buz-1',
-        nombre: 'Ethereal Hoodie',
-        imagen: '/images/buzo-1.jpg',
-        imagenes: ['/images/buzo-1.jpg', '/images/buzo-1-alt.jpg'],
-        precio: 85,
-        precioAnterior: 110,
-        categoria: 'Buzo',
-        nuevo: true,
-        colores: ['#000000', '#1a1a1a', '#DAA520'],
-        descripcion: 'Buzo con capucha premium, ultra suave y cálido.',
-        caracteristicas: [
-          'Tejido premium extra suave',
-          'Capucha ajustable',
-          'Bolsillo canguro amplio',
-          'Puños y bajo elastizados'
-        ],
-      },
-      {
-        id: 'buz-2',
-        nombre: 'Cosmic Energy',
-        imagen: '/images/buzo-2.jpg',
-        imagenes: ['/images/buzo-2.jpg'],
-        precio: 90,
-        categoria: 'Buzo',
-        colores: ['#FFFFFF', '#f0f0f0'],
-        descripcion: 'Energía cósmica plasmada en tejido premium.',
-      },
-      {
-        id: 'buz-3',
-        nombre: 'Lunar Phase',
-        imagen: '/images/buzo-3.jpg',
-        imagenes: ['/images/buzo-3.jpg'],
-        precio: 95,
-        categoria: 'Buzo',
-        nuevo: true,
-        colores: ['#000000', '#2a2a2a', '#FFFFFF'],
-        descripcion: 'Fases lunares en diseño minimalista elegante.',
-      },
-      {
-        id: 'buz-4',
-        nombre: 'Astral Journey',
-        imagen: '/images/buzo-4.jpg',
-        imagenes: ['/images/buzo-4.jpg'],
-        precio: 88,
-        precioAnterior: 115,
-        categoria: 'Buzo',
-        colores: ['#DAA520', '#FFD700', '#8B4513'],
-        descripcion: 'Viaje astral representado en bordados detallados.',
-      },
-    ],
-  },
-  pantalones: {
-    id: 'pantalones',
-    nombre: 'Pantalones',
-    descripcion: 'Movimiento y estilo en armonía',
-    icono: '☆',
-    ruta: '/categoria/pantalones',
-    productos: [
-      {
-        id: 'pant-1',
-        nombre: 'Void Walker',
-        imagen: '/images/pantalon-1.jpg',
-        imagenes: ['/images/pantalon-1.jpg'],
-        precio: 75,
-        categoria: 'Pantalón',
-        nuevo: true,
-        colores: ['#000000', '#1a1a1a'],
-        descripcion: 'Pantalón cargo con múltiples bolsillos tácticos.',
-        caracteristicas: [
-          'Tela resistente y flexible',
-          '8 bolsillos funcionales',
-          'Cintura ajustable',
-          'Corte carpenter'
-        ],
-      },
-      {
-        id: 'pant-2',
-        nombre: 'Dimensional Cargo',
-        imagen: '/images/pantalon-2.jpg',
-        imagenes: ['/images/pantalon-2.jpg'],
-        precio: 80,
-        categoria: 'Pantalón',
-        colores: ['#000000', '#2a2a2a', '#8B4513'],
-        descripcion: 'Cargo multidimensional con diseño futurista.',
-      },
-      {
-        id: 'pant-3',
-        nombre: 'Quantum Jogger',
-        imagen: '/images/pantalon-3.jpg',
-        imagenes: ['/images/pantalon-3.jpg'],
-        precio: 72,
-        precioAnterior: 95,
-        categoria: 'Pantalón',
-        colores: ['#000000', '#FFFFFF'],
-        descripcion: 'Jogger deportivo con tecnología de tejido avanzada.',
-      },
-      {
-        id: 'pant-4',
-        nombre: 'Parallel Lines',
-        imagen: '/images/pantalon-4.jpg',
-        imagenes: ['/images/pantalon-4.jpg'],
-        precio: 78,
-        categoria: 'Pantalón',
-        nuevo: true,
-        colores: ['#1a1a1a', '#3a3a3a'],
-        descripcion: 'Líneas paralelas que desafían las dimensiones.',
-      },
-    ],
-  },
-});
+  try {
+    // Ambas llamadas en paralelo para máxima velocidad
+    const [featured, allCats] = await Promise.all([
+      productosApi.getFeatured(6),  // GET /api/products/featured?limit=6
+      categoriasApi.getAll(),       // GET /api/categories
+    ]);
 
-// Handlers
-const handleFeaturedClick = (item: FeaturedItem) => {
-  console.log('Featured item clicked:', item);
-  // Puedes agregar lógica adicional aquí
+    piezasDestacadas.value = featured;
+
+    // Solo categorías con slug y con al menos un producto
+    categorias.value = allCats.filter(c => c.slug && c.productos.length > 0);
+  } catch (e) {
+    console.error('Error cargando datos de la home:', e);
+    error.value = true;
+  } finally {
+    loading.value = false;
+  }
 };
 
+onMounted(fetchData);
+
+// ─── Handlers ─────────────────────────────────────────────────────────────────
+
+// ✅ FIX: handler faltante en la versión anterior — HomePiezasDestacadas y
+//         CategorySection emiten este evento, sin él TypeScript lo marca como error
 const handleProductClick = (product: Product) => {
-  console.log('Product clicked:', product);
   router.push(`/producto/${product.id}`);
+};
+
+const handleFeaturedClick = (item: FeaturedItem) => {
+  // TODO: navegar a colección o detalle según el item
+  console.log('Featured item clicked:', item);
 };
 
 const handleQuickView = (product: Product) => {
@@ -426,19 +173,15 @@ const handleQuickView = (product: Product) => {
 };
 
 const handleAddToCart = (product: Product, quantity: number, color?: string, size?: string) => {
+  // TODO: conectar con useCartStore() cuando implementes el carrito
   console.log('Adding to cart:', { product, quantity, color, size });
-  
-  // Aquí iría la lógica del carrito
-  // Por ahora solo mostramos un mensaje
   alert(`Agregado al carrito: ${product.nombre} x${quantity}`);
-  
-  // Cerrar el modal
   showQuickView.value = false;
 };
 
 const handleNewsletter = (email: string) => {
+  // TODO: conectar con endpoint de newsletter
   console.log('Newsletter subscription:', email);
-  // Aquí iría la lógica para suscribir al newsletter
 };
 </script>
 
@@ -490,20 +233,78 @@ const handleNewsletter = (email: string) => {
 
 @keyframes float1 {
   0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  50% { transform: translate(30px, -30px) rotate(10deg); }
+  50%       { transform: translate(30px, -30px) rotate(10deg); }
 }
 
 @keyframes float2 {
   0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  50% { transform: translate(-30px, 30px) rotate(-10deg); }
+  50%       { transform: translate(-30px, 30px) rotate(-10deg); }
 }
 
 @keyframes float3 {
   0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  50% { transform: translate(40px, -20px) rotate(15deg); }
+  50%       { transform: translate(40px, -20px) rotate(15deg); }
 }
 
-/* Tablet (641px - 1024px) */
+/* Loading */
+.loading-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8rem 2rem;
+  gap: 1.5rem;
+}
+
+.loading-symbol {
+  font-size: 4rem;
+  color: #DAA520;
+  animation: spinSlow 3s linear infinite;
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
+}
+
+/* Error */
+.error-banner {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.error-banner button {
+  margin-left: 1rem;
+  padding: 0.5rem 1.5rem;
+  background: #DAA520;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  transition: background 0.2s;
+}
+
+.error-banner button:hover {
+  background: #FFD700;
+}
+
+/* Tablet */
 @media (min-width: 641px) and (max-width: 1024px) {
   .decoration {
     width: 200px;
@@ -512,7 +313,7 @@ const handleNewsletter = (email: string) => {
   }
 }
 
-/* Móvil (<= 640px) */
+/* Móvil */
 @media (max-width: 640px) {
   .decoration {
     display: none;

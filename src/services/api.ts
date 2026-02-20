@@ -1,364 +1,206 @@
-// API Services para ARCANA Fashion Hub
+/**
+ * api.ts — Servicio central de comunicación con el backend .NET
+ *
+ * Los tipos de retorno coinciden EXACTAMENTE con las interfaces de:
+ *   - src/types/product.ts  (Product, Category, FeaturedItem)
+ *   - src/types/api-types.ts (Order, OrderStatus, Cart, etc.)
+ */
 
-import type { CarouselItem, Category, Product } from '@/types/Index';
+import type { Product, Category } from '@/types/product';
+import type { Order, OrderStatus } from '@/types/api-types';
 
-// Configuración base de la API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+// ─── Configuración ────────────────────────────────────────────────────────────
+const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api';
 
-// Helper para hacer requests
-const request = async <T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> => {
-  const url = `${API_BASE_URL}${endpoint}`;
-  
-  const config: RequestInit = {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  };
+// ─── Wrapper de respuesta del backend ────────────────────────────────────────
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+  errors?: string[];
+}
 
-  // Agregar token de autenticación si existe
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers = {
-      ...config.headers,
-      'Authorization': `Bearer ${token}`,
-    };
-  }
+export interface PagedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
 
-  try {
-    const response = await fetch(url, config);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('API request failed:', error);
-    throw error;
-  }
-};
-
-// ==================== CARRUSEL ====================
-
-export const carouselService = {
-  // Obtener items del carrusel
-  getItems: async (): Promise<CarouselItem[]> => {
-    return request<CarouselItem[]>('/carrusel');
-  },
-
-  // Obtener items destacados
-  getFeatured: async (): Promise<CarouselItem[]> => {
-    return request<CarouselItem[]>('/carrusel/featured');
-  },
-};
-
-// ==================== CATEGORÍAS ====================
-
-export const categoryService = {
-  // Obtener todas las categorías
-  getAll: async (): Promise<Category[]> => {
-    return request<Category[]>('/categorias');
-  },
-
-  // Obtener categoría por ID
-  getById: async (id: number | string): Promise<Category> => {
-    return request<Category>(`/categorias/${id}`);
-  },
-
-  // Obtener categoría por slug
-  getBySlug: async (slug: string): Promise<Category> => {
-    return request<Category>(`/categorias/slug/${slug}`);
-  },
-};
-
-// ==================== PRODUCTOS ====================
-
+// ─── Parámetros de consulta ───────────────────────────────────────────────────
 export interface ProductQueryParams {
+  /** "remeras" | "buzos" | "pantalones" */
   categoria?: string;
-  limit?: number;
-  offset?: number;
+  search?: string;
+  minPrecio?: number;
+  maxPrecio?: number;
+  soloNuevos?: boolean;
+  orderBy?: 'nombre' | 'precio' | 'nuevo';
+  desc?: boolean;
+  page?: number;
+  pageSize?: number;
 }
 
-export interface ProductFilters {
-  categoria?: string;
-  precioMin?: number;
-  precioMax?: number;
-  tallas?: string[];
-  colores?: string[];
-}
-
-export const productService = {
-  // Obtener todos los productos
-  getAll: async (params?: ProductQueryParams): Promise<Product[]> => {
-    const queryParams = new URLSearchParams();
-    
-    if (params?.categoria) queryParams.append('categoria', params.categoria);
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.offset) queryParams.append('offset', params.offset.toString());
-    
-    const queryString = queryParams.toString();
-    const endpoint = queryString ? `/productos?${queryString}` : '/productos';
-    
-    return request<Product[]>(endpoint);
-  },
-
-  // Obtener producto por ID
-  getById: async (id: number | string): Promise<Product> => {
-    return request<Product>(`/productos/${id}`);
-  },
-
-  // Obtener productos destacados
-  getFeatured: async (): Promise<Product[]> => {
-    return request<Product[]>('/productos/featured');
-  },
-
-  // Buscar productos
-  search: async (query: string): Promise<Product[]> => {
-    return request<Product[]>(`/productos/search?q=${encodeURIComponent(query)}`);
-  },
-
-  // Filtrar productos
-  filter: async (filters: ProductFilters): Promise<Product[]> => {
-    return request<Product[]>('/productos/filter', {
-      method: 'POST',
-      body: JSON.stringify(filters),
-    });
-  },
-};
-
-// ==================== USUARIO ====================
-
-export interface LoginResponse {
-  token: string;
-  user: User;
-}
-
-export interface User {
-  id: number | string;
+export interface OrderCreatePayload {
   nombre: string;
   email: string;
-  [key: string]: any;
-}
-
-export interface RegisterData {
-  nombre: string;
-  email: string;
-  password: string;
-}
-
-export const userService = {
-  // Login
-  login: async (email: string, password: string): Promise<LoginResponse> => {
-    const response = await request<LoginResponse>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-    
-    // Guardar token
-    if (response.token) {
-      localStorage.setItem('auth_token', response.token);
-    }
-    
-    return response;
-  },
-
-  // Registro
-  register: async (data: RegisterData): Promise<LoginResponse> => {
-    return request<LoginResponse>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  },
-
-  // Obtener perfil
-  getProfile: async (): Promise<User> => {
-    return request<User>('/usuario/perfil');
-  },
-
-  // Actualizar perfil
-  updateProfile: async (data: Partial<User>): Promise<User> => {
-    return request<User>('/usuario/perfil', {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  },
-
-  // Logout
-  logout: () => {
-    localStorage.removeItem('auth_token');
-  },
-};
-
-// ==================== CARRITO ====================
-
-export interface CartItem {
-  id: number | string;
-  productoId: number | string;
-  producto: Product;
+  telefono: string;
+  productoId: string | number;
+  talla: string;
+  color: string;
   cantidad: number;
-  talla?: string;
-  color?: string;
-  precio: number;
+  notasAdicionales?: string;
 }
 
-export interface Cart {
-  id: number | string;
-  items: CartItem[];
-  total: number;
-  subtotal: number;
-  impuestos?: number;
-  envio?: number;
-}
+// ─── Fetch helper con manejo de errores ──────────────────────────────────────
+async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${BASE_URL}${endpoint}`, {
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    ...options,
+  });
 
-export interface AddToCartData {
-  productoId: number | string;
-  cantidad: number;
-  talla?: string;
-  color?: string;
-}
+  const json: ApiResponse<T> = await res.json();
 
-export const cartService = {
-  // Obtener carrito
-  get: async (): Promise<Cart> => {
-    return request<Cart>('/carrito');
-  },
-
-  // Agregar item al carrito
-  addItem: async (data: AddToCartData): Promise<Cart> => {
-    return request<Cart>('/carrito/items', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  },
-
-  // Actualizar cantidad de item
-  updateItem: async (itemId: number | string, cantidad: number): Promise<Cart> => {
-    return request<Cart>(`/carrito/items/${itemId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ cantidad }),
-    });
-  },
-
-  // Eliminar item del carrito
-  removeItem: async (itemId: number | string): Promise<Cart> => {
-    return request<Cart>(`/carrito/items/${itemId}`, {
-      method: 'DELETE',
-    });
-  },
-
-  // Limpiar carrito
-  clear: async (): Promise<Cart> => {
-    return request<Cart>('/carrito', {
-      method: 'DELETE',
-    });
-  },
-};
-
-// ==================== PEDIDOS ====================
-
-export interface ShippingAddress {
-  calle: string;
-  ciudad: string;
-  estado: string;
-  codigoPostal: string;
-  pais: string;
-  telefono?: string;
-}
-
-export interface CreateOrderData {
-  items: CartItem[];
-  direccionEnvio: ShippingAddress;
-  metodoPago: string;
-  notas?: string;
-}
-
-export interface Order {
-  id: number | string;
-  items: CartItem[];
-  total: number;
-  estado: string;
-  direccionEnvio: ShippingAddress;
-  metodoPago: string;
-  fechaCreacion: string;
-  fechaActualizacion?: string;
-}
-
-export const orderService = {
-  // Crear pedido
-  create: async (data: CreateOrderData): Promise<Order> => {
-    return request<Order>('/pedidos', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  },
-
-  // Obtener pedidos del usuario
-  getAll: async (): Promise<Order[]> => {
-    return request<Order[]>('/pedidos');
-  },
-
-  // Obtener pedido por ID
-  getById: async (id: number | string): Promise<Order> => {
-    return request<Order>(`/pedidos/${id}`);
-  },
-
-  // Cancelar pedido
-  cancel: async (id: number | string): Promise<Order> => {
-    return request<Order>(`/pedidos/${id}/cancel`, {
-      method: 'POST',
-    });
-  },
-};
-
-// ==================== HELPERS ====================
-
-// Manejar errores de forma centralizada
-export const handleApiError = (error: any): string => {
-  if (error.response) {
-    // Error de respuesta del servidor
-    console.error('Error del servidor:', error.response.data);
-    return error.response.data.message || 'Error del servidor';
-  } else if (error.request) {
-    // Error de red
-    console.error('Error de red:', error.request);
-    return 'Error de conexión. Por favor, verifica tu conexión a internet.';
-  } else {
-    // Otro tipo de error
-    console.error('Error:', error.message);
-    return error.message || 'Ocurrió un error inesperado';
+  if (!res.ok || !json.success) {
+    throw new Error(json.errors?.[0] ?? `HTTP ${res.status}`);
   }
+
+  return json.data;
+}
+
+function buildQuery(params: Record<string, string | number | boolean | undefined>): string {
+  const q = new URLSearchParams();
+  for (const [key, val] of Object.entries(params)) {
+    if (val !== undefined && val !== null && val !== '') {
+      q.set(key, String(val));
+    }
+  }
+  const str = q.toString();
+  return str ? `?${str}` : '';
+}
+
+// ─── Productos ────────────────────────────────────────────────────────────────
+export const productosApi = {
+  /**
+   * Lista paginada con filtros.
+   *
+   * Ejemplo para reemplazar los datos hardcodeados de HomeView.vue:
+   *
+   *   const { items } = await productosApi.getAll({ categoria: 'remeras', pageSize: 4 });
+   */
+  async getAll(params: ProductQueryParams = {}): Promise<PagedResponse<Product>> {
+    const qs = buildQuery({
+      Categoria:  params.categoria,
+      Search:     params.search,
+      MinPrecio:  params.minPrecio,
+      MaxPrecio:  params.maxPrecio,
+      SoloNuevos: params.soloNuevos,
+      OrderBy:    params.orderBy,
+      Desc:       params.desc,
+      Page:       params.page ?? 1,
+      PageSize:   params.pageSize ?? 12,
+    });
+    return apiFetch<PagedResponse<Product>>(`/products${qs}`);
+  },
+
+  /**
+   * Piezas destacadas para HomePiezasDestacadas y HomeFeatured.
+   * Reemplaza los arrays piezasDestacadas y featuredItems en HomeView.vue.
+   */
+  async getFeatured(limit = 6): Promise<Product[]> {
+    return apiFetch<Product[]>(`/products/featured?limit=${limit}`);
+  },
+
+  /** Detalle completo de un producto — para ProductsDetailView.vue */
+  async getById(id: string | number): Promise<Product> {
+    return apiFetch<Product>(`/products/${id}`);
+  },
 };
 
-// ==================== EXPORTACIONES ====================
+// ─── Categorías ───────────────────────────────────────────────────────────────
+export const categoriasApi = {
+  /**
+   * Devuelve las 3 categorías (remeras, buzos, pantalones) con sus productos.
+   * Reemplaza el objeto reactivo 'categorias' en HomeView.vue.
+   *
+   * Retorna Category[] — compatible con la interfaz Category de product.ts:
+   *   { id, nombre, descripcion, icono, ruta?, productos }
+   */
+  async getAll(): Promise<Category[]> {
+    return apiFetch<Category[]>('/categories');
+  },
 
-// Exportar servicios con nombres en español (compatibilidad)
-export const carruselService = carouselService;
-export const categoriaService = categoryService;
-export const productoService = productService;
-export const usuarioService = userService;
-export const carritoService = cartService;
-export const pedidoService = orderService;
-
-// Exportar todos los servicios (default export)
-export default {
-  // Nombres en inglés (recomendado)
-  carousel: carouselService,
-  category: categoryService,
-  product: productService,
-  user: userService,
-  cart: cartService,
-  order: orderService,
-  
-  // Nombres en español (compatibilidad con código existente)
-  carrusel: carouselService,
-  categoria: categoryService,
-  producto: productService,
-  usuario: userService,
-  carrito: cartService,
-  pedido: orderService,
+  /** Una categoría con sus productos (soporta filtros y paginación) */
+  async getBySlug(slug: string, params: ProductQueryParams = {}): Promise<Category> {
+    const qs = buildQuery({
+      Page:     params.page ?? 1,
+      PageSize: params.pageSize ?? 12,
+      OrderBy:  params.orderBy,
+    });
+    return apiFetch<Category>(`/categories/${slug}${qs}`);
+  },
 };
+
+// ─── Pedidos ──────────────────────────────────────────────────────────────────
+export const pedidosApi = {
+  /**
+   * Crear un pedido personalizado.
+   *
+   * Reemplaza el alert() en handleAddToCart de HomeView.vue:
+   *
+   *   const handleAddToCart = async (product, qty, color, size) => {
+   *     await pedidosApi.create({
+   *       nombre: contacto.nombre, email: contacto.email,
+   *       telefono: contacto.telefono, productoId: product.id,
+   *       talla: size ?? 'M', color: color ?? '', cantidad: qty
+   *     });
+   *   };
+   */
+  async create(payload: OrderCreatePayload): Promise<{ id: string; message: string }> {
+    return apiFetch('/orders', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getById(id: string): Promise<Order> {
+    return apiFetch<Order>(`/orders/${id}`);
+  },
+};
+
+// ─── Guía de migración de HomeView.vue ───────────────────────────────────────
+/**
+ * ANTES (hardcodeado):
+ *   const piezasDestacadas = ref<Product[]>([ ... 200 líneas ... ]);
+ *   const categorias = reactive({ remeras: {...}, buzos: {...}, pantalones: {...} });
+ *
+ * DESPUÉS (con API):
+ *
+ *   import { productosApi, categoriasApi } from '@/services/api';
+ *   import { onMounted } from 'vue';
+ *
+ *   const piezasDestacadas = ref<Product[]>([]);
+ *   const featuredItems     = ref<Product[]>([]);
+ *   const categorias        = ref<Category[]>([]);
+ *   const loading           = ref(true);
+ *
+ *   onMounted(async () => {
+ *     try {
+ *       const [featured, allCats] = await Promise.all([
+ *         productosApi.getFeatured(6),
+ *         categoriasApi.getAll(),
+ *       ]);
+ *       piezasDestacadas.value = featured;
+ *       featuredItems.value    = featured;
+ *       categorias.value       = allCats;
+ *     } finally {
+ *       loading.value = false;
+ *     }
+ *   });
+ *
+ * NOTA: En el template reemplazá:
+ *   :category="categorias.remeras"  →  :category="categorias.find(c => c.slug === 'remeras')"
+ */

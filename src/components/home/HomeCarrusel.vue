@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import type { CarouselItem } from '@/types/Index'
 
 interface Props {
@@ -81,15 +81,14 @@ const props = withDefaults(defineProps<Props>(), {
 const activeIndex = ref(0)
 const carruselCircle = ref<HTMLElement | null>(null)
 const rotation = ref(0)
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1280)
 let autoRotateTimer: number | null = null
 
-// Radius adaptativo según viewport
-const getRadius = () => {
-  if (typeof window === 'undefined') return 280
-  const width = window.innerWidth
-  if (width <= 640) return 160 // Móvil
-  if (width <= 1024) return 220 // Tablet
-  return 280 // Desktop
+// Radius reactivo basado en windowWidth
+const getRadius = (): number => {
+  if (windowWidth.value <= 640) return 160
+  if (windowWidth.value <= 1024) return 220
+  return 280
 }
 
 const getItemPosition = (index: number) => {
@@ -97,14 +96,13 @@ const getItemPosition = (index: number) => {
   const angle = (index * 360) / totalItems - rotation.value
   const angleRad = (angle * Math.PI) / 180
   const radius = getRadius()
-  
+
   const x = Math.cos(angleRad) * radius
   const y = Math.sin(angleRad) * radius
-  
   const zIndex = Math.round(Math.cos(angleRad) * 100)
-  const scale = 0.6 + (Math.cos(angleRad) * 0.4)
-  const opacity = 0.4 + (Math.cos(angleRad) * 0.6)
-  
+  const scale = 0.6 + Math.cos(angleRad) * 0.4
+  const opacity = 0.4 + Math.cos(angleRad) * 0.6
+
   return {
     transform: `translate(${x}px, ${y}px) scale(${scale})`,
     zIndex: zIndex + 100,
@@ -115,7 +113,7 @@ const getItemPosition = (index: number) => {
 const rotate = (direction: 'left' | 'right') => {
   const totalItems = props.items.length
   const step = 360 / totalItems
-  
+
   if (direction === 'right') {
     rotation.value += step
     activeIndex.value = (activeIndex.value + 1) % totalItems
@@ -123,7 +121,7 @@ const rotate = (direction: 'left' | 'right') => {
     rotation.value -= step
     activeIndex.value = (activeIndex.value - 1 + totalItems) % totalItems
   }
-  
+
   resetAutoRotate()
 }
 
@@ -131,10 +129,10 @@ const setActiveItem = (index: number) => {
   const totalItems = props.items.length
   const diff = index - activeIndex.value
   const step = 360 / totalItems
-  
+
   rotation.value += diff * step
   activeIndex.value = index
-  
+
   resetAutoRotate()
 }
 
@@ -147,7 +145,7 @@ const startAutoRotate = () => {
 }
 
 const stopAutoRotate = () => {
-  if (autoRotateTimer) {
+  if (autoRotateTimer !== null) {
     clearInterval(autoRotateTimer)
     autoRotateTimer = null
   }
@@ -158,14 +156,22 @@ const resetAutoRotate = () => {
   startAutoRotate()
 }
 
+// ← NUEVO: actualiza el ancho al resize
+const handleResize = () => {
+  windowWidth.value = window.innerWidth
+}
+
 onMounted(() => {
   startAutoRotate()
+  window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
   stopAutoRotate()
+  window.removeEventListener('resize', handleResize)  // ← cleanup correcto
 })
 </script>
+
 
 <style scoped>
 .carrusel-container {

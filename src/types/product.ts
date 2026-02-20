@@ -1,26 +1,28 @@
-// Tipos para productos y categorías
+// src/types/product.ts
+
 export interface Product {
   id: number | string;
-  nombre?: string;  // Opcional para compatibilidad con CarouselItem
-  titulo?: string;  // Opcional para compatibilidad con CarouselItem
+  nombre?: string;
+  titulo?: string;
   imagen: string;
-  imagenes?: string[];  // ✅ NUEVO - Array de imágenes para galería
-  precio?: number;  // Opcional para items que no tienen precio (featured items)
+  imagenes?: string[];
+  precio?: number;
   precioAnterior?: number;
   categoria?: string;
   nuevo?: boolean;
   colores?: string[];
   descripcion?: string;
-  caracteristicas?: string[];  // ✅ NUEVO - Array de características del producto
+  caracteristicas?: string[];
   stock?: number;
   tallas?: string[];
   ruta?: string;
-  badge?: string;  // ✅ NUEVO - Badge destacado (ej: "EXCLUSIVO", "NUEVO")
-  size?: 'normal' | 'featured' | 'wide' | 'tall';  // ✅ NUEVO - Tamaño en grid
+  badge?: string;
+  size?: 'normal' | 'featured' | 'wide' | 'tall';
 }
 
 export interface Category {
   id: number | string;
+  slug: string;           // ← AGREGADO: viene del backend, necesario para filtros
   nombre: string;
   descripcion: string;
   icono: string;
@@ -33,7 +35,6 @@ export interface FeaturedItem {
   imagen: string;
   titulo: string;
   categoria: string;
-  // Campos opcionales para compatibilidad con CarouselItem
   nombre?: string;
   precio?: number;
   precioAnterior?: number;
