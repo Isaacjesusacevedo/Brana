@@ -9,6 +9,13 @@ const adminStore = useAdminStore()
 const TIPOS = ['Remera', 'Buzo', 'Pantalón'] as const
 const TALLES = ['S', 'M', 'L', 'XL'] as const
 
+// IDs según el orden de inserción del seeder (Remeras=1, Buzos=2, Pantalones=3)
+const TIPO_A_CATEGORIA_ID: Record<string, number> = {
+  'Remera':   1,
+  'Buzo':     2,
+  'Pantalón': 3,
+}
+
 type Tipo = typeof TIPOS[number]
 type Talle = typeof TALLES[number]
 
@@ -102,9 +109,8 @@ async function handleSubmit() {
     payload.append('nombre', form.nombre)
     payload.append('precio', String(form.precio))
     payload.append('descripcion', form.descripcion)
-    payload.append('tipo', form.tipo)
-    // Talles como array; algunos backends aceptan valores repetidos con la misma key
-    form.talles.forEach(t => payload.append('talles', t))
+    payload.append('categoriaId', String(TIPO_A_CATEGORIA_ID[form.tipo] ?? 0))
+    form.talles.forEach(t => payload.append('tallas', t))
     payload.append('imagen', form.imagen)
 
     const res = await fetch(`${BASE_URL}/products`, {
