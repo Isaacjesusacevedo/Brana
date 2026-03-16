@@ -240,12 +240,8 @@ const handleNewsletter = (email: string) => {
 </script>
 
 <style scoped>
-.home-container {
-  position: relative;
-  min-height: 100vh;
-  background: #000;
-  overflow-x: hidden;
-}
+@import '@/assets/css/views/home-view.css';
+
 
 /* ── Decoraciones flotantes ── */
 .floating-decorations {

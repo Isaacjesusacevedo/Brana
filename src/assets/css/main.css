@@ -1,23 +1,37 @@
+/* ================================================================
+   BRANA — Punto de entrada CSS global
+   Orden de carga: variables → reset → globals → tipografía → layout
+
+   NOTA: Los estilos de components y views están encapsulados en
+   sus respectivos archivos .vue via <style scoped>@import...</style>
+   y NO deben importarse aquí para evitar conflictos de especificidad.
+================================================================ */
+
 /* ================= BASE STYLES ================= */
 @import './base/variables.css';
 @import './base/reset.css';
 @import './base/globals.css';
 @import './base/typography.css';
 
-/* ================= COMPONENTS ================= */
+/* ================= COMPONENT LIBRARY (global overrides) ================= */
+/* Estos archivos son para estilos globales de sistema de diseño.
+   Los estilos de componentes específicos están en sus archivos .vue */
 @import './components/buttons.css';
 @import './components/inputs.css';
 @import './components/cards.css';
 @import './components/modals.css';
-@import './components/navbar.css';
+/* navbar.css: movido a <style scoped> en NavBar.vue */
 
-/* ================= LAYOUT ================= */
+/* ================= LAYOUT SHELLS ================= */
 @import './layout/header.css';
 @import './layout/footer.css';
 @import './layout/navigation.css';
 @import './layout/grid.css';
+/* admin-layout.css: movido a <style scoped> en AdminLayout.vue */
 
-/* ================= VIEWS ================= */
+/* ================= LEGACY HOME GLOBAL STYLES ================= */
+/* Estilos globales del home escritos antes de la extracción por componente.
+   Los componentes usan sus propios archivos CSS vía scoped @import. */
 @import './views/home/home.css';
 @import './views/home/home-hero.css';
 @import './views/home/home-categories.css';
@@ -25,6 +39,7 @@
 @import './views/home/home-philosophy.css';
 @import './views/home/home-manifesto.css';
 
-@import './views/products.css';
+/* cart.css: vacío (stub) */
 @import './views/cart.css';
-@import './views/checkout.css';
+/* checkout.css: movido a <style scoped> en CheckoutView.vue */
+/* products.css: vacío (stub) */

@@ -334,10 +334,8 @@ const sizeGuideData = [
 </script>
 
 <style scoped>
-/* ========================
-   BASE
-======================== */
-.detail-container {
+@import '@/assets/css/views/producto.css';
+
   position: relative;
   min-height: 100vh;
   background: #000;
