@@ -269,9 +269,8 @@ async function handleSubmit() {
 </template>
 
 <style scoped>
-.admin-productos {
-  max-width: 760px;
-}
+@import '@/assets/css/views/admin-productos.css';
+
 
 .page-header {
   margin-bottom: 36px;

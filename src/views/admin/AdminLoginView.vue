@@ -96,14 +96,8 @@ async function handleLogin() {
 </template>
 
 <style scoped>
-.login-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #0a0a0a;
-  padding: 24px;
-}
+@import '@/assets/css/views/admin-login.css';
+
 
 .login-card {
   background: #141414;
