@@ -1,0 +1,840 @@
+<template>
+  <div class="cart-container">
+    <StarsBackground :particleCount="60" />
+
+    <div class="floating-decorations">
+      <img src="@/assets/images/logos/estatuaart1.png"     alt="" class="decoration decoration-1" />
+      <img src="@/assets/images/logos/toquealoeterno.png"  alt="" class="decoration decoration-2" />
+    </div>
+
+    <div class="cart-content">
+      <!-- ── Header ─────────────────────────────────────────────────── -->
+      <header class="cart-header">
+        <div class="header-ornament">
+          <span class="orn-line"></span>
+          <span class="orn-sym">✧</span>
+          <span class="orn-line"></span>
+        </div>
+        <h1 class="cart-title">TU CARRITO</h1>
+        <p class="cart-subtitle">
+          <template v-if="!cart.isEmpty">
+            {{ cart.totalItems }}
+            {{ cart.totalItems === 1 ? 'pieza seleccionada' : 'piezas seleccionadas' }}
+          </template>
+          <template v-else>El arcano aguarda</template>
+        </p>
+      </header>
+
+      <!-- ── Carrito vacío ──────────────────────────────────────────── -->
+      <div v-if="cart.isEmpty" class="empty-cart">
+        <div class="empty-icon">◈</div>
+        <h2>Tu bolsa está vacía</h2>
+        <p>Cada prenda es un símbolo. Encontrá el tuyo.</p>
+        <div class="empty-actions">
+          <router-link to="/catalogo" class="btn-primary">EXPLORAR COLECCIÓN</router-link>
+        </div>
+      </div>
+
+      <!-- ── Cart con ítems ─────────────────────────────────────────── -->
+      <div v-else class="cart-grid">
+        <!-- Lista de ítems -->
+        <div class="cart-items">
+          <TransitionGroup name="cart-item">
+            <div
+              v-for="item in cart.items"
+              :key="item.lineId"
+              class="cart-item"
+            >
+              <!-- Imagen -->
+              <div class="item-image-container">
+                <img
+                  :src="item.imagen"
+                  :alt="item.nombre"
+                  class="item-image"
+                />
+              </div>
+
+              <!-- Info -->
+              <div class="item-info">
+                <p class="item-category">{{ item.categoria }}</p>
+                <h3 class="item-name">{{ item.nombre }}</h3>
+
+                <div class="item-details">
+                  <div v-if="item.color" class="item-attr">
+                    <span class="attr-label">Color</span>
+                    <span
+                      class="color-dot"
+                      :style="{ backgroundColor: item.color }"
+                    ></span>
+                  </div>
+                  <div v-if="item.talla" class="item-attr">
+                    <span class="attr-label">Talle</span>
+                    <span class="attr-value">{{ item.talla }}</span>
+                  </div>
+                </div>
+
+                <!-- Controles de cantidad -->
+                <div class="item-quantity">
+                  <button
+                    class="qty-btn"
+                    :disabled="item.cantidad <= 1"
+                    @click="cart.decrement(item.lineId)"
+                    aria-label="Reducir cantidad"
+                  >−</button>
+                  <span class="qty-value">{{ item.cantidad }}</span>
+                  <button
+                    class="qty-btn"
+                    @click="cart.increment(item.lineId)"
+                    aria-label="Aumentar cantidad"
+                  >+</button>
+                </div>
+              </div>
+
+              <!-- Precio + eliminar -->
+              <div class="item-actions">
+                <p class="item-price">$ {{ formatPrice(item.precio * item.cantidad) }}</p>
+                <button
+                  class="btn-remove"
+                  @click="confirmRemove(item)"
+                  aria-label="Eliminar producto"
+                >✕</button>
+              </div>
+            </div>
+          </TransitionGroup>
+        </div>
+
+        <!-- ── Resumen ─────────────────────────────────────────────── -->
+        <aside class="cart-summary">
+          <div class="summary-card">
+            <h2 class="summary-title">Resumen del Pedido</h2>
+
+            <div class="summary-line">
+              <span>Subtotal</span>
+              <span>$ {{ formatPrice(cart.subtotal) }}</span>
+            </div>
+
+            <div class="summary-line">
+              <span>Envío</span>
+              <span :class="{ free: cart.shippingCost === 0 }">
+                {{ cart.shippingCost === 0 ? 'GRATIS' : `$ ${formatPrice(cart.shippingCost)}` }}
+              </span>
+            </div>
+
+            <div v-if="cart.discountAmount > 0" class="summary-line discount">
+              <span>Descuento ({{ cart.promoCode }})</span>
+              <span>− $ {{ formatPrice(cart.discountAmount) }}</span>
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-total">
+              <span>Total</span>
+              <span class="total-amount">$ {{ formatPrice(cart.total) }}</span>
+            </div>
+
+            <!-- Código de descuento -->
+            <div class="promo-section">
+              <div v-if="!cart.promoCode" class="promo-code">
+                <input
+                  v-model="promoInput"
+                  type="text"
+                  placeholder="CÓDIGO DE DESCUENTO"
+                  class="promo-input"
+                  @keydown.enter="handleApplyPromo"
+                />
+                <button class="promo-btn" @click="handleApplyPromo">APLICAR</button>
+              </div>
+              <div v-else class="promo-applied">
+                <span class="promo-tag">{{ cart.promoCode }} aplicado ✓</span>
+                <button class="promo-remove-btn" @click="cart.removePromoCode()">Quitar</button>
+              </div>
+              <p v-if="promoError" class="promo-error">{{ promoError }}</p>
+            </div>
+
+            <!-- Info envío -->
+            <div class="shipping-info">
+              <span class="shipping-icon">◈</span>
+              <p>Envío gratis en compras mayores a $100.000</p>
+            </div>
+
+            <!-- Botones -->
+            <router-link to="/checkout" class="btn-checkout">
+              PROCEDER AL PAGO →
+            </router-link>
+            <router-link to="/catalogo" class="btn-continue">
+              Seguir comprando
+            </router-link>
+          </div>
+        </aside>
+      </div>
+
+      <!-- ── Recomendaciones ────────────────────────────────────────── -->
+      <section v-if="!cart.isEmpty && recommendations.length" class="recommendations">
+        <div class="section-header">
+          <span class="header-sym">◆</span>
+          <h2 class="section-title">También te puede interesar</h2>
+          <span class="header-sym">◆</span>
+        </div>
+        <div class="recommendations-grid">
+          <div
+            v-for="product in recommendations"
+            :key="product.id"
+            class="recommendation-card"
+            @click="router.push(`/producto/${product.id}`)"
+          >
+            <div class="rec-image">
+              <img :src="product.imagen" :alt="product.nombre ?? 'Producto'" />
+            </div>
+            <div class="rec-info">
+              <p class="rec-category">{{ product.categoria }}</p>
+              <h3 class="rec-name">{{ product.nombre ?? product.titulo }}</h3>
+              <p class="rec-price">$ {{ formatPrice(product.precio ?? 0) }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ── Modal confirmación eliminar ──────────────────────────────── -->
+    <BaseModal v-model="showRemoveModal" size="small" :hideHeader="true">
+      <div class="remove-modal">
+        <p class="remove-modal-sym">◈</p>
+        <h3>¿Eliminar esta pieza?</h3>
+        <p class="remove-modal-name">{{ itemToRemove?.nombre }}</p>
+        <div class="remove-modal-actions">
+          <button class="btn-cancel" @click="showRemoveModal = false">Cancelar</button>
+          <button class="btn-confirm-remove" @click="executeRemove">Eliminar</button>
+        </div>
+      </div>
+    </BaseModal>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+import StarsBackground from '@/components/tienda/common/StarBackground.vue';
+import BaseModal       from '@/components/tienda/common/BaseModal.vue';
+
+// ✅ Tipos importados — no redeclarados localmente
+import type { Product }     from '@/types/producto.types';
+import type { CartLineItem } from '@/stores/useCartStore';
+
+// ✅ Store de Pinia — no estado local
+import { useCartStore } from '@/stores/useCartStore';
+
+const router = useRouter();
+const cart   = useCartStore();
+
+// ── Formato de precios (ARS con separador de miles) ───────────────────────────
+const formatPrice = (value: number): string =>
+  new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(value);
+
+// ── Código de descuento ───────────────────────────────────────────────────────
+const promoInput = ref('');
+const promoError = ref('');
+
+const handleApplyPromo = () => {
+  promoError.value = '';
+  if (!promoInput.value.trim()) return;
+
+  const ok = cart.applyPromoCode(promoInput.value);
+  if (ok) {
+    promoInput.value = '';
+  } else {
+    promoError.value = 'Código inválido o ya utilizado.';
+  }
+};
+
+// ── Modal de confirmación para eliminar ──────────────────────────────────────
+const showRemoveModal = ref(false);
+const itemToRemove    = ref<CartLineItem | null>(null);
+
+const confirmRemove = (item: CartLineItem) => {
+  itemToRemove.value = item;
+  showRemoveModal.value = true;
+};
+
+const executeRemove = () => {
+  if (itemToRemove.value) {
+    cart.removeItem(itemToRemove.value.lineId);
+    itemToRemove.value = null;
+  }
+  showRemoveModal.value = false;
+};
+
+// ── Recomendaciones ───────────────────────────────────────────────────────────
+// TODO: conectar con productosApi.getFeatured() filtrando los ya en carrito
+const recommendations = ref<Product[]>([]);
+</script>
+
+<style scoped>
+.cart-container {
+  position: relative;
+  min-height: 100vh;
+  background: #000;
+  overflow-x: hidden;
+}
+
+.floating-decorations {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.08;
+}
+
+.decoration {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  filter: blur(2px);
+}
+
+.decoration-1 { top: 15%; right: -5%; animation: f1 25s ease-in-out infinite; }
+.decoration-2 { bottom: 10%; left: -5%; animation: f2 30s ease-in-out infinite; }
+
+@keyframes f1 { 0%, 100% { transform: translate(0,0) rotate(0); } 50% { transform: translate(-20px,20px) rotate(-8deg); } }
+@keyframes f2 { 0%, 100% { transform: translate(0,0) rotate(0); } 50% { transform: translate(20px,-20px) rotate(8deg); } }
+
+/* ── Content ── */
+.cart-content {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 8rem 2rem 4rem;
+}
+
+/* ── Header ── */
+.cart-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.header-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.orn-line {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold, #daa520), transparent);
+}
+
+.orn-sym {
+  color: var(--gold, #daa520);
+  font-size: 1.2rem;
+}
+
+.cart-title {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 900;
+  letter-spacing: 0.3em;
+  color: #fff;
+  text-transform: uppercase;
+  margin: 0 0 0.8rem;
+}
+
+.cart-subtitle {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.9rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* ── Empty ── */
+.empty-cart {
+  text-align: center;
+  padding: 6rem 2rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.empty-icon {
+  font-size: 5rem;
+  color: var(--gold, #daa520);
+  opacity: 0.2;
+  margin-bottom: 2rem;
+  display: block;
+}
+
+.empty-cart h2 {
+  font-size: 1.8rem;
+  color: var(--gold, #daa520);
+  margin-bottom: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.empty-cart p {
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 2.5rem;
+}
+
+.empty-actions { display: flex; justify-content: center; }
+
+/* ── Cart Grid ── */
+.cart-grid {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 3rem;
+  align-items: start;
+}
+
+/* ── Items ── */
+.cart-items { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.cart-item {
+  display: grid;
+  grid-template-columns: 140px 1fr auto;
+  gap: 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.8rem;
+  border-radius: 4px;
+  transition: border-color 0.3s ease;
+}
+
+.cart-item:hover { border-color: rgba(218, 165, 32, 0.25); }
+
+.item-image-container {
+  width: 140px;
+  height: 140px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.3);
+  flex-shrink: 0;
+}
+
+.item-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.cart-item:hover .item-image { transform: scale(1.05); }
+
+.item-info { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.item-category {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--gold, #daa520);
+  text-transform: uppercase;
+}
+
+.item-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.item-details { display: flex; gap: 1.5rem; margin-top: 0.3rem; }
+
+.item-attr { display: flex; align-items: center; gap: 0.5rem; }
+
+.attr-label {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.attr-value { font-size: 0.85rem; color: #fff; }
+
+.color-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+
+/* Quantity */
+.item-quantity {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: auto;
+}
+
+.qty-btn {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qty-btn:hover:not(:disabled) { border-color: var(--gold, #daa520); color: var(--gold, #daa520); }
+.qty-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+.qty-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  min-width: 24px;
+  text-align: center;
+}
+
+/* Item Actions */
+.item-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.item-price {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--gold, #daa520);
+  white-space: nowrap;
+}
+
+.btn-remove {
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.04);
+  border: none;
+  color: rgba(255,255,255,0.35);
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  margin-top: auto;
+}
+
+.btn-remove:hover { background: rgba(220,38,38,0.15); color: #dc2626; }
+
+/* ── Summary ── */
+.cart-summary { position: sticky; top: 100px; }
+
+.summary-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 2rem;
+  border-radius: 4px;
+}
+
+.summary-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold, #daa520);
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-align: center;
+}
+
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.9rem 0;
+  color: rgba(255,255,255,0.7);
+  font-size: 0.95rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.summary-line .free { color: #4ade80; font-weight: 600; }
+.summary-line.discount { color: #4ade80; }
+
+.summary-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 1rem 0; }
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.total-amount { color: var(--gold, #daa520); font-size: 1.6rem; }
+
+/* Promo */
+.promo-section { margin: 1.5rem 0; }
+
+.promo-code { display: flex; gap: 0.5rem; }
+
+.promo-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  font-size: 0.8rem;
+  border-radius: 2px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.promo-input:focus { border-color: var(--gold, #daa520); }
+.promo-input::placeholder { color: rgba(255,255,255,0.2); }
+
+.promo-btn {
+  padding: 0.75rem 1.2rem;
+  background: transparent;
+  border: 1px solid var(--gold, #daa520);
+  color: var(--gold, #daa520);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.promo-btn:hover { background: var(--gold, #daa520); color: #000; }
+
+.promo-applied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: rgba(74, 222, 128, 0.07);
+  border: 1px solid rgba(74, 222, 128, 0.25);
+  border-radius: 2px;
+}
+
+.promo-tag { font-size: 0.8rem; color: #4ade80; letter-spacing: 0.1em; }
+
+.promo-remove-btn {
+  font-size: 0.72rem;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.35);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.promo-error {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #dc2626;
+  letter-spacing: 0.05em;
+}
+
+/* Shipping info */
+.shipping-info {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem;
+  background: rgba(218, 165, 32, 0.04);
+  border: 1px solid rgba(218, 165, 32, 0.15);
+  border-radius: 4px;
+  margin: 1.5rem 0;
+}
+
+.shipping-icon { color: var(--gold, #daa520); font-size: 1rem; }
+.shipping-info p { font-size: 0.82rem; color: rgba(255,255,255,0.6); }
+
+/* CTA buttons */
+.btn-checkout {
+  display: block;
+  width: 100%;
+  padding: 1.2rem;
+  text-align: center;
+  background: linear-gradient(135deg, var(--gold, #daa520), #f5c842);
+  color: #000;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+  margin-bottom: 0.8rem;
+}
+
+.btn-checkout:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(218, 165, 32, 0.3);
+}
+
+.btn-continue {
+  display: block;
+  width: 100%;
+  padding: 1rem;
+  text-align: center;
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.btn-continue:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
+
+/* Primary button (empty cart) */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  padding: 1.1rem 2.5rem;
+  background: linear-gradient(135deg, var(--gold, #daa520), #f5c842);
+  color: #000;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(218,165,32,0.3); }
+
+/* ── Recomendaciones ── */
+.recommendations { margin-top: 5rem; padding-top: 4rem; border-top: 1px solid rgba(255,255,255,0.07); }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  margin-bottom: 3rem;
+}
+
+.header-sym { color: var(--gold, #daa520); font-size: 0.7rem; opacity: 0.6; }
+
+.section-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.recommendations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.recommendation-card { cursor: pointer; transition: transform 0.3s ease; }
+.recommendation-card:hover { transform: translateY(-6px); }
+
+.rec-image {
+  aspect-ratio: 1;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.recommendation-card:hover .rec-image { border-color: rgba(218,165,32,0.3); }
+
+.rec-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+.recommendation-card:hover .rec-image img { transform: scale(1.08); }
+
+.rec-info { display: flex; flex-direction: column; gap: 0.3rem; }
+
+.rec-category { font-size: 0.65rem; color: var(--gold, #daa520); letter-spacing: 0.2em; text-transform: uppercase; }
+.rec-name { font-size: 0.9rem; color: #fff; letter-spacing: 0.08em; text-transform: uppercase; }
+.rec-price { font-size: 1rem; font-weight: 700; color: var(--gold, #daa520); }
+
+/* ── Modal confirmar eliminar ── */
+.remove-modal { text-align: center; padding: 2rem; }
+
+.remove-modal-sym { font-size: 2.5rem; color: var(--gold, #daa520); opacity: 0.4; margin-bottom: 1rem; }
+
+.remove-modal h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.remove-modal-name { font-size: 0.9rem; color: rgba(255,255,255,0.4); margin-bottom: 2rem; }
+
+.remove-modal-actions { display: flex; gap: 1rem; justify-content: center; }
+
+.btn-cancel,
+.btn-confirm-remove {
+  padding: 0.8rem 1.8rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.6);
+}
+
+.btn-cancel:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
+
+.btn-confirm-remove {
+  background: rgba(220,38,38,0.1);
+  border: 1px solid rgba(220,38,38,0.4);
+  color: #dc2626;
+}
+
+.btn-confirm-remove:hover { background: rgba(220,38,38,0.2); }
+
+/* ── Animaciones TransitionGroup ── */
+.cart-item-enter-active,
+.cart-item-leave-active { transition: all 0.3s ease; }
+.cart-item-enter-from   { opacity: 0; transform: translateX(-16px); }
+.cart-item-leave-to     { opacity: 0; transform: translateX(16px); }
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .cart-grid { grid-template-columns: 1fr; }
+  .cart-summary { position: static; }
+}
+
+@media (max-width: 640px) {
+  .cart-content { padding: 6rem 1rem 2rem; }
+
+  .cart-item {
+    grid-template-columns: 90px 1fr;
+    gap: 1rem;
+    padding: 1.2rem;
+  }
+
+  .item-image-container { width: 90px; height: 90px; }
+
+  .item-actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .recommendations-grid { grid-template-columns: repeat(2, 1fr); }
+
+  .decoration { display: none; }
+}
+</style>

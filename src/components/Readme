@@ -1,0 +1,580 @@
+# BRANA — Documentación de Componentes Vue 3
+
+> Análisis estructural · Detección de bugs · Propuestas de solución  
+> Versión 2.0 · Marzo 2026 · 19 componentes · 18 bugs identificados
+
+---
+
+## Índice
+
+1. [Resumen ejecutivo](#1-resumen-ejecutivo)
+2. [Registro global de bugs](#2-registro-global-de-bugs)
+3. [Componentes — `ui/`](#3-componentes--ui)
+4. [Componentes — `layout/`](#4-componentes--layout)
+5. [Componentes — `product/`](#5-componentes--product)
+6. [Componentes — `home/`](#6-componentes--home)
+7. [Plan de acción priorizado](#7-plan-de-acción-priorizado)
+8. [Mapa de dependencias](#8-mapa-de-dependencias)
+9. [Correcciones al Readme anterior](#9-correcciones-al-readme-anterior)
+
+---
+
+## 1. Resumen ejecutivo
+
+Este documento analiza en profundidad los 19 componentes Vue 3 del proyecto BRANA, identificando inconsistencias internas, bugs reales en el código fuente y proponiendo soluciones concretas.
+
+El análisis examina: comportamiento en runtime, coherencia entre template y script, uso correcto de las APIs de Vue 3, y consistencia entre breakpoints CSS y lógica JavaScript.
+
+| Severidad | Cantidad |
+|-----------|----------|
+| 🔴 Crítico | 3 |
+| 🟠 Alto | 5 |
+| 🟡 Medio | 7 |
+| 🟢 Bajo | 3 |
+| **Total** | **18** |
+
+---
+
+## 2. Registro global de bugs
+
+| Bug ID | Componente | Severidad | Descripción breve |
+|--------|------------|-----------|-------------------|
+| BUG-001 | `Header.vue` | 🔴 Crítico | `onUnmounted()` registrado dentro del callback de `onMounted()` → memory leak |
+| BUG-002 | `Footer.vue` | 🔴 Crítico | `handleNewsletter` se dispara dos veces: `@click` en botón + `@submit.prevent` en form |
+| BUG-003 | `CategorySection.vue` | 🔴 Crítico | `ITEM_W=280px` hardcodeado no coincide con el CSS responsive (240/200/172px) |
+| BUG-004 | `NavBar.vue` | 🟠 Alto | Elemento raíz `<header>` anidado dentro de `Header.vue` que también es `<header>` |
+| BUG-005 | `Footer.vue` | 🟠 Alto | Clase `.newsletter-button` definida en CSS pero no asignada al `<button>` del template |
+| BUG-006 | `ProductList.vue` | 🟠 Alto | Doble overlay en hover: el de `ProductCard` y el de `ProductList` se activan simultáneamente |
+| BUG-007 | `HomeNewletter.vue` | 🟠 Alto | `try/catch` alrededor de `emit()` no puede capturar errores del handler del padre |
+| BUG-008 | `BaseModal.vue` | 🟠 Alto | Faltan `role="dialog"`, `aria-modal="true"` y `aria-labelledby` — modal no accesible |
+| BUG-009 | `CategorySection.vue` | 🟡 Medio | `trackRef` declarado y asignado pero nunca usado en el script |
+| BUG-010 | `HomePilares.vue` | 🟡 Medio | `activeIndex` actualizado en mouseenter/mouseleave pero nunca leído |
+| BUG-011 | `StarBackground.vue` | 🟡 Medio | Comentario afirma que `computed()` no depende de refs, pero sí depende de props |
+| BUG-012 | `BaseInput.vue` | 🟡 Medio | `getCurrentInstance()?.uid` es API interna de Vue, inestable en SSR |
+| BUG-013 | `HomeHero.vue` | 🟡 Medio | `primaryCta` siempre renderizado como `<a target="_blank">`, ignora rutas Vue Router |
+| BUG-014 | `ProducQuickView.vue` | 🟡 Medio | `qty-input` sin validación en entrada directa — los botones +/− tienen guards pero el input no |
+| BUG-015 | `NavBar.vue` | 🟡 Medio | Menú móvil sin click-outside handler — solo se cierra haciendo clic en un RouterLink |
+| BUG-016 | `ProductFilter.vue` | 🟢 Bajo | `parseOrder()` hace cast inseguro: `field as FilterState["orderBy"]` sin validación en runtime |
+| BUG-017 | `Header.vue` | 🟢 Bajo | `.header-overlay`, transición `.fade` y ref `mobileMenuOpen` definidos pero nunca usados |
+| BUG-018 | `ProductList.vue` | 🟢 Bajo | Selector `.product-list.mode-grid` definido dos veces en el CSS con reglas diferentes |
+
+---
+
+## 3. Componentes — `ui/`
+
+### 3.1 `BaseButton.vue`
+
+Botón polimórfico que puede renderizarse como `<button>` o `<a>` según el prop `tag`. Soporta tres variantes visuales y tres tamaños.
+
+**Props**
+
+| Prop | Tipo | Default | Notas |
+|------|------|---------|-------|
+| `variant` | `'primary' \| 'secondary' \| 'outline'` | `'primary'` | primary: gradiente dorado. secondary: borde dorado. outline: borde blanco |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Controla padding y font-size |
+| `tag` | `'button' \| 'a'` | `'button'` | Elemento HTML renderizado |
+| `arrow` | `boolean` | `false` | Si true, muestra flecha `→` animada en hover |
+| `href` | `string \| undefined` | — | Solo se aplica si `tag="a"` |
+| `target` / `rel` | `string \| undefined` | — | Solo se aplican si `tag="a"` |
+
+**Emits**
+
+| Evento | Payload | Descripción |
+|--------|---------|-------------|
+| `click` | `Event` | Re-emite el evento click nativo |
+
+> ⚠️ **Sin uso activo:** ningún componente importa `BaseButton`. Hay al menos 3 estilos de botón duplicados (HomeHero, HomeFeatured, CategorySection) que deberían unificarse aquí.
+
+---
+
+### 3.2 `BaseInput.vue`
+
+Input polimórfico con soporte para text, email, password, number, tel, search y textarea. Implementa label flotante, icono de limpiar, toggle de contraseña y mensajes de error/hint.
+
+**Props**
+
+| Prop | Tipo | Default | Notas |
+|------|------|---------|-------|
+| `modelValue` | `string \| number` | — | Usar con `v-model` |
+| `label` | `string` | — | Label flotante. Se eleva al foco o cuando hay valor |
+| `type` | `'text' \| 'email' \| 'password' \| ... \| 'textarea'` | `'text'` | `'textarea'` renderiza un `<textarea>` |
+| `clearable` | `boolean` | `false` | Muestra botón ✕ para limpiar el campo |
+| `variant` | `'default' \| 'ghost' \| 'filled'` | `'default'` | Variante visual |
+| `error` | `string` | — | Mensaje de error. Tiene prioridad sobre hint |
+| `hint` | `string` | — | Texto de ayuda, visible solo cuando el campo está enfocado |
+
+**🟡 BUG-012 — `getCurrentInstance()` — API interna de Vue**
+
+```ts
+// ❌ Código actual
+const inputId = `brana-input-${getCurrentInstance()?.uid}`;
+
+// ✅ Solución: contador global estable en SSR
+let _counter = 0;
+const inputId = `brana-input-${++_counter}`;
+// En Vue 3.5+ se puede usar useId() como API oficial
+```
+
+> ✅ **Correcto:** `defineOptions({ inheritAttrs: false })` con `v-bind="$attrs"` aplicado correctamente solo al input/textarea.
+
+---
+
+### 3.3 `BaseModal.vue`
+
+Modal genérico con `Teleport` a body. Soporta 4 tamaños, header opcional, footer slot, bloqueo de scroll y transición de entrada/salida.
+
+**Props**
+
+| Prop | Tipo | Default | Notas |
+|------|------|---------|-------|
+| `modelValue` | `boolean` | — | Controla visibilidad. Usar con `v-model` |
+| `size` | `'small' \| 'medium' \| 'large' \| 'fullscreen'` | `'medium'` | small=400px, medium=800px, large=1200px |
+| `hideHeader` | `boolean` | `false` | Oculta el header completo |
+| `closeOnOverlayClick` | `boolean` | `true` | Click en overlay llama a `close()` |
+
+**🟠 BUG-008 — Falta de atributos ARIA**
+
+```html
+<!-- ❌ Código actual -->
+<div class="modal-container">
+
+<!-- ✅ Solución -->
+<div
+  class="modal-container"
+  role="dialog"
+  aria-modal="true"
+  :aria-labelledby="titleId"
+>
+```
+
+> Implementar además un focus trap con `focus-trap-vue` o un composable `useFocusTrap`.
+
+---
+
+### 3.4 `StarBackground.vue`
+
+Fondo de partículas estáticas pre-computadas. Posición `fixed` con `z-index: 0`. Usada en HomeView, CartView, CheckoutView y ProductsDetailView.
+
+**🟡 BUG-011 — Comentario técnicamente incorrecto**
+
+El comentario afirma que el `computed()` "se evalúa una sola vez porque no depende de ningún ref reactivo". Sin embargo, **sí depende** de `props.particleCount` y `props.opacity`. Si el padre cambia esas props, las estrellas se reposicionan aleatoriamente causando un salto visual.
+
+```ts
+// ✅ Si la intención es posiciones estables (no reactivas):
+const starStyles = Array.from({ length: props.particleCount }, () => ({
+  left: `${Math.random() * 100}%`,
+  top:  `${Math.random() * 100}%`,
+  opacity: props.opacity * Math.random(),
+}));
+// Constante calculada una sola vez en setup(), sin computed()
+```
+
+---
+
+## 4. Componentes — `layout/`
+
+### 4.1 `Header.vue`
+
+Shell del encabezado. Gestiona un banner promocional rotativo con auto-cierre por localStorage y monta `NavBar`.
+
+**🔴 BUG-001 — `onUnmounted()` registrado dentro del callback de `onMounted()`** ✅ *Corregido*
+
+```ts
+// ❌ Original — Vue no puede registrar el hook fuera de setup()
+onMounted(() => {
+  const promoInterval = setInterval(/* ... */, 5000);
+  onUnmounted(() => clearInterval(promoInterval)); // ← nunca se ejecuta
+});
+
+// ✅ Corregido — promoInterval en scope de setup(), hooks al mismo nivel
+let promoInterval: ReturnType<typeof setInterval> | null = null;
+
+onMounted(() => {
+  if (promos.length > 1 && showBanner.value) {
+    let currentIndex = 0;
+    promoInterval = setInterval(() => {
+      currentIndex = (currentIndex + 1) % promos.length;
+      currentPromo.value = promos[currentIndex]!;
+    }, 5000);
+  }
+});
+
+onUnmounted(() => {
+  if (promoInterval) clearInterval(promoInterval);
+});
+```
+
+**🟢 BUG-017 — CSS zombie eliminado** ✅ *Corregido*
+
+Eliminados: `.header-overlay`, la transición `.fade-enter-active / .fade-leave-active` y el ref `mobileMenuOpen`. Son residuos de una versión anterior donde Header manejaba el menú móvil.
+
+---
+
+### 4.2 `NavBar.vue`
+
+Barra de navegación principal. Conectada a `useCartStore` para el contador del carrito. Muestra mensajes rotativos y cambia de estilo al hacer scroll.
+
+**🟠 BUG-004 — `<header>` anidado — HTML5 inválido**
+
+```html
+<!-- ❌ DOM resultante: <header><header> — inválido en HTML5 -->
+<!-- Header.vue -->  <header class="header">
+<!-- NavBar.vue -->    <header class="navbar">
+
+<!-- ✅ Solución: cambiar NavBar a <nav> -->
+<nav class="navbar">
+  ...
+</nav>
+```
+
+**🟡 BUG-015 — Menú móvil sin click-outside**
+
+```ts
+// ✅ Solución: watcher que registra/desregistra listener global
+const navbarEl = ref<HTMLElement | null>(null);
+
+watch(mobileMenuOpen, (open) => {
+  if (open) document.addEventListener('click', closeOnOutside);
+  else      document.removeEventListener('click', closeOnOutside);
+});
+
+const closeOnOutside = (e: MouseEvent) => {
+  if (!navbarEl.value?.contains(e.target as Node)) {
+    mobileMenuOpen.value = false;
+  }
+};
+
+onUnmounted(() => document.removeEventListener('click', closeOnOutside));
+```
+
+---
+
+### 4.3 `Footer.vue`
+
+Footer con columnas de links, redes sociales y formulario de newsletter.
+
+**🔴 BUG-002 — `handleNewsletter` se dispara dos veces** ✅ *Corregido*
+
+```html
+<!-- ❌ Original — doble disparo: @click + @submit -->
+<form @submit.prevent="handleNewsletter">
+  <button @click="handleNewsletter">Suscribirse</button>
+</form>
+
+<!-- ✅ Corregido — solo @submit.prevent en el form -->
+<form @submit.prevent="handleNewsletter">
+  <button class="newsletter-button" :disabled="isSubmitting">
+    {{ isSubmitting ? '...' : '→' }}
+  </button>
+</form>
+```
+
+**🟠 BUG-005 — Clase `.newsletter-button` no asignada al botón** ✅ *Corregido*
+
+El CSS definía `.newsletter-button` con gradiente dorado, 50×50px y border-radius, pero el `<button>` no tenía esa clase. La flecha `→` también estaba suelta fuera del botón como `<span>` huérfano.
+
+> ⚠️ **Rutas muertas:** Los links de SHOP (`/categoria/remeras`, etc.) y LEGAL (`/terminos`, `/privacidad`, etc.) no tienen vistas asignadas y redirigen a home silenciosamente.
+
+---
+
+## 5. Componentes — `product/`
+
+### 5.1 `CategorySection.vue`
+
+Slider horizontal con auto-rotación, posicionamiento CSS `transform`, dots y botones prev/next. Usado 3 veces en HomeView.
+
+**Props**
+
+| Prop | Tipo | Default | Notas |
+|------|------|---------|-------|
+| `category` | `Category` | — | Objeto completo de la categoría con su array de productos |
+| `autoRotate` | `boolean` | `true` | Habilita la rotación automática del slider |
+| `interval` | `number` | `5000` | Intervalo de auto-rotación en milisegundos |
+
+**🔴 BUG-003 — `ITEM_W` y `GAP` hardcodeados no coinciden con el CSS responsive**
+
+```ts
+// ❌ Original
+const ITEM_W = 280; // CSS lo cambia a 240/200/172px según breakpoint
+const GAP = 24;
+
+// ✅ Solución — computed reactivo usando windowW ref ya existente
+const itemW = computed(() => {
+  if (windowW.value <= 480)  return 172;
+  if (windowW.value <= 768)  return 200;
+  if (windowW.value <= 1024) return 240;
+  return 280;
+});
+
+// En getItemStyle():
+const x = offset * (itemW.value + GAP);
+```
+
+**🟡 BUG-009 — `trackRef` sin uso**
+
+`const trackRef = ref<HTMLElement | null>(null)` declarado y asignado con `ref="trackRef"` en el template, pero nunca se usa en el script. Eliminar ambas referencias.
+
+---
+
+### 5.2 `ProductCard.vue`
+
+Tarjeta de producto standalone. Sin uso directo en vistas: su funcionalidad la consume `ProductList` en modo grid.
+
+**Props**
+
+| Prop | Tipo | Default | Notas |
+|------|------|---------|-------|
+| `product` | `Product` | — | Soporta nombre, imagen, precio, precioAnterior, colores, badge, nuevo |
+| `disableNav` | `boolean` | `false` | Si true, el click emite evento en lugar de navegar |
+
+> ⚠️ `fmt()` duplicado inline — debería importarse de `usePricing`.
+
+---
+
+### 5.3 `ProductFilter.vue`
+
+> ✅ **Corrección crítica al Readme anterior:** `ProductFilter.vue` **NO está vacío**. Contiene una implementación completa: ordenamiento por nombre/precio/nuevo, rango de precios, swatches de colores, toggle solo-nuevos y reset de filtros. Exporta `FilterState` como tipo público.
+
+**Props**
+
+| Prop | Tipo | Default | Notas |
+|------|------|---------|-------|
+| `availableColors` | `string[]` | `[]` | Colores hex disponibles para swatches |
+| `modelValue` | `FilterState` | ver tipo | Estado inicial. Permite sincronización con URL |
+
+**Emits:** `update:modelValue`, `change`
+
+**🟢 BUG-016 — Cast inseguro en `parseOrder()`**
+
+```ts
+// ❌ Sin validación en runtime
+field as FilterState["orderBy"]
+
+// ✅ Con type guard
+const VALID_ORDERS = ['nombre', 'precio', 'nuevo'] as const;
+if (VALID_ORDERS.includes(field as typeof VALID_ORDERS[number])) {
+  orderBy = field as FilterState['orderBy'];
+}
+```
+
+---
+
+### 5.4 `ProductList.vue`
+
+Lista dual-mode (grid/list) con skeleton loading, estado vacío y transiciones.
+
+**🟠 BUG-006 — Doble overlay en hover (modo grid)**
+
+`ProductCard` tiene su propio `.product-card__overlay` ("Ver detalles →") y `ProductList` agrega un `.quick-actions` con `z-index: 3` encima. En hover se activan los dos simultáneamente.
+
+```ts
+// ✅ Solución: agregar prop overlayDisabled a ProductCard
+<ProductCard :product="p" :overlay-disabled="true" />
+```
+
+**🟢 BUG-018 — Selector CSS duplicado**
+
+`.product-list.mode-grid` está definido dos veces con reglas diferentes. Unificar en un solo bloque.
+
+---
+
+### 5.5 `ProducQuickView.vue` *(typo: falta "t" → `ProductQuickView`)*
+
+Vista rápida con galería, selección de color/talla/cantidad y acción de carrito. Ya usa `usePricing` composable.
+
+**🟡 BUG-014 — `qty-input` sin validación en entrada directa**
+
+```ts
+// ✅ Solución: watcher que sanitiza el valor
+watch(quantity, val => {
+  quantity.value = Math.max(1, Math.min(10, val ?? 1));
+});
+```
+
+> ✅ **Correcto:** `usePricing` importado y usado para `fmt`, `hasDiscount`, `discountLabel`. Único componente que ya adoptó el composable.
+
+---
+
+## 6. Componentes — `home/`
+
+### 6.1 `HomeHero.vue`
+
+Hero section con animación de agujero negro, título, subtítulo HTML y CTAs.
+
+**🟡 BUG-013 — `primaryCta` siempre renderizado como `<a target="_blank">`**
+
+```ts
+// ✅ Solución: tipo discriminado
+type CtaButton =
+  | { type: 'external'; text: string; href: string }
+  | { type: 'internal'; text: string; route: string }
+```
+
+```html
+<a v-if="primaryCta.type === 'external'"
+   :href="primaryCta.href" target="_blank">
+  {{ primaryCta.text }}
+</a>
+<RouterLink v-else :to="primaryCta.route">
+  {{ primaryCta.text }}
+</RouterLink>
+```
+
+---
+
+### 6.2 `HomeFeatured.vue`
+
+Carrusel orbital con posicionamiento trigonométrico en elipse. Carga desde la API con fallback estático.
+
+> ✅ **Corrección al Readme anterior:** El debounce de 150ms en el resize listener **ya está implementado**. El Readme anterior lo marcaba como bug pendiente.
+
+> ⚠️ Dos llamadas separadas a `onMounted()`. Válido en Vue 3 pero consolidable para mayor claridad.
+
+---
+
+### 6.3 `HomeFusion.vue`
+
+Sección editorial del concepto JP-ARG con layout split y hemisferios animados.
+
+> ⚠️ `ctaRoute="/coleccion/fusion"` no tiene ruta definida. Redirige al catchall (home). Solución inmediata: usar `ctaRoute="/catalogo"` hasta que la ruta exista.
+
+---
+
+### 6.4 `HomeNewletter.vue` *(typo: falta "s" → `HomeNewsletter`)*
+
+Formulario de suscripción con lista de beneficios. Solo emite el email al padre.
+
+**🟠 BUG-007 — `try/catch` alrededor de `emit()` no captura errores del padre**
+
+`emit()` es sincrónico y no propaga excepciones del handler del padre. El mensaje de éxito siempre se muestra aunque la API falle.
+
+```ts
+// ✅ Solución A: adoptar useNewsletter composable
+const { subscribe, isLoading, error, success } = useNewsletter();
+
+// ✅ Solución B: el padre comunica resultado via props
+// Props: :submitSuccess, :submitError observados con watcher
+```
+
+---
+
+### 6.5 `HomePhilosophy.vue`
+
+Manifiesto de marca con cita blockquote, pilares en chips e imagen decorativa.
+
+> ⚠️ Los defaults de pilares son idénticos a los de `HomePilares.vue`. Deben extraerse a `src/data/brandPilares.ts` como única fuente de verdad.
+
+---
+
+### 6.6 `HomePilares.vue`
+
+Grid de 4 pilares de marca. Los efectos hover son **enteramente CSS**, sin intervención de Vue.
+
+**🟡 BUG-010 — `activeIndex` declarado y actualizado pero nunca leído**
+
+```ts
+// ❌ Código muerto
+const activeIndex = ref<number | null>(null);
+// @mouseenter="activeIndex = i"  @mouseleave="activeIndex = null"
+
+// ✅ Eliminar el ref y todos los handlers. El CSS :hover lo gestiona todo.
+```
+
+---
+
+## 7. Plan de acción priorizado
+
+### Sprint 1 — Bugs críticos (acción inmediata)
+
+| # | Bug | Componente | Estado |
+|---|-----|------------|--------|
+| 1 | BUG-001 | `Header.vue` | ✅ Corregido |
+| 2 | BUG-002 | `Footer.vue` | ✅ Corregido |
+| 3 | BUG-003 | `CategorySection.vue` | ⏳ Pendiente |
+
+### Sprint 2 — Bugs altos
+
+| # | Bug | Componente | Estado |
+|---|-----|------------|--------|
+| 1 | BUG-004 | `NavBar.vue` | ⏳ Pendiente |
+| 2 | BUG-005 | `Footer.vue` | ✅ Corregido |
+| 3 | BUG-006 | `ProductList.vue` | ⏳ Pendiente |
+| 4 | BUG-007 | `HomeNewletter.vue` | ⏳ Pendiente |
+| 5 | BUG-008 | `BaseModal.vue` | ⏳ Pendiente |
+
+### Sprint 3 — Bugs medios y deuda técnica
+
+- [ ] BUG-009: Eliminar `trackRef` de `CategorySection.vue`
+- [ ] BUG-010: Eliminar `activeIndex` y handlers de `HomePilares.vue`
+- [ ] BUG-011: Corregir `computed()` o el comentario en `StarBackground.vue`
+- [ ] BUG-012: Reemplazar `getCurrentInstance()?.uid` en `BaseInput.vue`
+- [ ] BUG-013: Implementar tipo discriminado `CtaButton` en `HomeHero.vue`
+- [ ] BUG-014: Validar `qty-input` con `Math.max/min` en `ProducQuickView.vue`
+- [ ] BUG-015: Agregar click-outside al menú móvil de `NavBar.vue`
+- [ ] Adoptar `usePricing` en CategorySection, ProductList, ProductCard, HomeFeatured
+- [ ] Adoptar `useNewsletter` en `Footer.vue` y `HomeNewletter.vue`
+- [ ] Extraer pilares a `src/data/brandPilares.ts`
+
+### Sprint 4 — Renaming y deuda baja
+
+- [ ] BUG-016: Agregar type guard en `parseOrder()` de `ProductFilter.vue`
+- [x] BUG-017: CSS zombie limpiado de `Header.vue`
+- [ ] BUG-018: Unificar selector CSS duplicado en `ProductList.vue`
+- [ ] Renombrar `HomeNewletter.vue` → `HomeNewsletter.vue`
+- [ ] Renombrar `ProducQuickView.vue` → `ProductQuickView.vue`
+- [ ] Adoptar `BaseButton` en los 3 estilos de botón duplicados
+- [ ] Crear `NotFoundView.vue` y `ContactoView.vue`
+
+---
+
+## 8. Mapa de dependencias
+
+### Store → Componentes
+
+```
+useCartStore.totalItems  →  NavBar.vue            ✅
+useCartStore.*           →  CartView.vue           ✅
+useCartStore.addItem     →  ProducQuickView.vue    ✅
+```
+
+### Composables → Componentes
+
+```
+usePricing    →  ProducQuickView.vue               ✅ adoptado
+usePricing    →  CategorySection, ProductList,
+                 ProductCard, HomeFeatured          ⏳ 4 copias de fmt() inline
+useNewsletter →  Footer.vue, HomeNewletter.vue      ⏳ implementaciones locales
+```
+
+### API Service → Componentes
+
+```
+productosApi.getFeatured()  →  HomeFeatured.vue    ⚠️ directo, sin store
+productosApi.getAll()       →  CatalogoView.vue    ✅
+categoriasApi.getAll()      →  HomeView.vue        ⏳ datos hardcodeados
+```
+
+### Router — rutas con issues
+
+| Ruta | Estado | Componentes afectados |
+|------|--------|-----------------------|
+| `/filosofia` | ⚠️ Redirige a home | NavBar, Footer, HomePhilosophy |
+| `/contacto` | ⚠️ Redirige a home | NavBar, Footer |
+| `/coleccion/fusion` | ❌ Sin ruta | HomeFusion CTA |
+| `/terminos`, `/privacidad`, `/envios`, `/faq`, `/about` | ❌ Sin vista | Footer LEGAL/INFO |
+| `/categoria/:slug` | ✅ Redirige a `/catalogo?categoria=` | Footer SHOP |
+
+---
+
+## 9. Correcciones al Readme anterior
+
+| Componente | Readme anterior | Realidad del código |
+|------------|----------------|---------------------|
+| `ProductFilter.vue` | ❌ Archivo vacío | ✅ Completamente implementado. Exporta `FilterState`. |
+| `HomeFeatured.vue` resize | ⚠️ Sin debounce (bug pendiente) | ✅ Debounce 150ms ya implementado |
+| `Footer.vue` newsletter | TODO pendiente | ⚠️ Implementado con BUG-002 y BUG-005 (ya corregidos) |
+| `BaseButton.vue` | ⚠️ Sin uso activo | Sin cambios. Confirmado: ningún componente lo importa |
+
+---
+
+*BRANA · Documentación Técnica v2.0 · Marzo 2026*

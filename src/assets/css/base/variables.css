@@ -1,0 +1,252 @@
+/* ========================================
+   BASE - VARIABLES
+   ========================================
+   
+   Variables globales del proyecto BRANA
+   Incluye: colores, tipografía, espaciados, 
+   breakpoints, sombras y efectos
+======================================== */
+
+/* ========== COLORES PRINCIPALES ========== */
+:root {
+  /* Dorados - Paleta principal BRANA */
+  --color-gold-primary: #D4AF37;
+  --color-gold-light: #FFD700;
+  --color-gold-dark: #B8860B;
+  --color-gold-glow: rgba(212, 175, 55, 0.5);
+  
+  /* Cyberpunk Neons - Acentos */
+  --color-cyber-cyan: #00FFF0;
+  --color-neon-green: #39FF14;
+  --color-electric-blue: #0FF;
+  --color-purple-deep: #B026FF;
+  --color-neon-pink: #FF10F0;
+  
+  /* Ámbar - Acentos cálidos */
+  --color-amber: #FFB347;
+  --color-amber-glow: rgba(255, 179, 71, 0.8);
+  
+  /* Blacks & Grays */
+  --color-black: #000000;
+  --color-black-soft: #0a0a0a;
+  --color-black-medium: #1a1a1a;
+  --color-gray-darkest: #1a1a1a;
+  --color-gray-dark: #2a2a2a;
+  --color-gray-medium: #6b7280;
+  --color-gray-light: #9ca3af;
+  --color-gray-lighter: #d1d5db;
+  --color-white: #ffffff;
+  --color-white-soft: #f5f5f5;
+  
+  /* Backgrounds */
+  --bg-primary: var(--color-black);
+  --bg-secondary: var(--color-black-soft);
+  --bg-card: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  
+  /* Text Colors */
+  --text-primary: var(--color-white);
+  --text-secondary: rgba(255, 255, 255, 0.85);
+  --text-tertiary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.5);
+  --text-gold: var(--color-gold-primary);
+}
+
+/* ========== TIPOGRAFÍA ========== */
+:root {
+  /* Font Families */
+  --font-primary: 'Montserrat', sans-serif;
+  --font-display: 'Cinzel', serif;
+  --font-heading: 'Orbitron', sans-serif;
+  --font-body: 'Cormorant Garamond', serif;
+  --font-mono: 'Share Tech Mono', monospace;
+  
+  /* Font Sizes */
+  --font-size-xs: 0.75rem;      /* 12px */
+  --font-size-sm: 0.875rem;     /* 14px */
+  --font-size-base: 1rem;       /* 16px */
+  --font-size-lg: 1.125rem;     /* 18px */
+  --font-size-xl: 1.25rem;      /* 20px */
+  --font-size-2xl: 1.5rem;      /* 24px */
+  --font-size-3xl: 1.875rem;    /* 30px */
+  --font-size-4xl: 2.25rem;     /* 36px */
+  --font-size-5xl: 3rem;        /* 48px */
+  --font-size-6xl: 3.75rem;     /* 60px */
+  --font-size-7xl: 4.5rem;      /* 72px */
+  --font-size-8xl: 6rem;        /* 96px */
+  
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-black: 900;
+  
+  /* Letter Spacing */
+  --letter-spacing-tight: -0.05em;
+  --letter-spacing-normal: 0em;
+  --letter-spacing-wide: 0.1em;
+  --letter-spacing-wider: 0.2em;
+  --letter-spacing-widest: 0.3em;
+  
+  /* Line Heights */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.6;
+  --line-height-loose: 2;
+}
+
+/* ========== ESPACIADO ========== */
+:root {
+  --spacing-xs: 0.25rem;    /* 4px */
+  --spacing-sm: 0.5rem;     /* 8px */
+  --spacing-md: 1rem;       /* 16px */
+  --spacing-lg: 1.5rem;     /* 24px */
+  --spacing-xl: 2rem;       /* 32px */
+  --spacing-2xl: 3rem;      /* 48px */
+  --spacing-3xl: 4rem;      /* 64px */
+  --spacing-4xl: 5rem;      /* 80px */
+  --spacing-5xl: 6rem;      /* 96px */
+  --spacing-6xl: 8rem;      /* 128px */
+  --spacing-7xl: 10rem;     /* 160px */
+}
+
+/* ========== BREAKPOINTS ========== */
+:root {
+  --breakpoint-xs: 320px;
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+/* ========== SOMBRAS ========== */
+:root {
+  /* Gold Shadows */
+  --shadow-gold-sm: 0 0 10px var(--color-gold-glow);
+  --shadow-gold-md: 0 0 20px rgba(212, 175, 55, 0.3);
+  --shadow-gold-lg: 0 0 30px rgba(212, 175, 55, 0.4);
+  --shadow-gold-xl: 0 0 40px rgba(212, 175, 55, 0.5);
+  --shadow-gold-2xl: 
+    0 0 20px rgba(212, 175, 55, 0.5),
+    0 0 40px rgba(212, 175, 55, 0.3),
+    0 20px 60px rgba(212, 175, 55, 0.4);
+  
+  /* Cyber Shadows */
+  --shadow-cyber: 0 0 20px var(--color-cyber-cyan);
+  --shadow-neon: 0 0 20px var(--color-neon-green);
+  
+  /* Standard Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* ========== BORDES ========== */
+:root {
+  --border-width-thin: 1px;
+  --border-width-medium: 2px;
+  --border-width-thick: 3px;
+  
+  --border-radius-sm: 0.25rem;   /* 4px */
+  --border-radius-md: 0.5rem;    /* 8px */
+  --border-radius-lg: 0.75rem;   /* 12px */
+  --border-radius-xl: 1rem;      /* 16px */
+  --border-radius-2xl: 1.5rem;   /* 24px */
+  --border-radius-full: 9999px;
+  
+  --border-gold: 1px solid rgba(212, 175, 55, 0.3);
+  --border-gold-strong: 2px solid var(--color-gold-primary);
+}
+
+/* ========== Z-INDEX ========== */
+:root {
+  --z-index-base: 0;
+  --z-index-dropdown: 100;
+  --z-index-sticky: 200;
+  --z-index-fixed: 300;
+  --z-index-modal-backdrop: 400;
+  --z-index-modal: 500;
+  --z-index-popover: 600;
+  --z-index-tooltip: 700;
+  --z-index-notification: 800;
+  --z-index-max: 999;
+}
+
+/* ========== TRANSICIONES ========== */
+:root {
+  --transition-fast: 150ms;
+  --transition-base: 250ms;
+  --transition-slow: 350ms;
+  --transition-slower: 500ms;
+  
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-smooth: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-cyber: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== EFECTOS ESPECIALES ========== */
+:root {
+  /* Blur Effects */
+  --blur-sm: 4px;
+  --blur-md: 8px;
+  --blur-lg: 16px;
+  --blur-xl: 24px;
+  
+  /* Backdrop Filters */
+  --backdrop-blur-sm: blur(4px);
+  --backdrop-blur-md: blur(12px);
+  --backdrop-blur-lg: blur(20px);
+  
+  /* Opacity Levels */
+  --opacity-0: 0;
+  --opacity-10: 0.1;
+  --opacity-20: 0.2;
+  --opacity-30: 0.3;
+  --opacity-40: 0.4;
+  --opacity-50: 0.5;
+  --opacity-60: 0.6;
+  --opacity-70: 0.7;
+  --opacity-80: 0.8;
+  --opacity-90: 0.9;
+  --opacity-100: 1;
+}
+
+/* ========== CONTAINER ========== */
+:root {
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1400px;
+  
+  --container-padding: var(--spacing-lg);
+}
+
+/* ========== GRADIENTES ========== */
+:root {
+  --gradient-gold: linear-gradient(135deg, var(--color-gold-primary), var(--color-gold-light));
+  --gradient-gold-dark: linear-gradient(135deg, var(--color-gold-light), var(--color-gold-dark));
+  --gradient-cyber: linear-gradient(135deg, var(--color-cyber-cyan), var(--color-neon-green));
+  --gradient-dark: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  --gradient-overlay: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.7) 50%, transparent 100%);
+}
+
+/* ========== TEXT SHADOWS ========== */
+:root {
+  --text-shadow-gold: 0 0 20px rgba(212, 175, 55, 0.8);
+  --text-shadow-gold-strong: 
+    0 0 20px rgba(212, 175, 55, 0.8),
+    0 0 40px rgba(212, 175, 55, 0.5);
+  --text-shadow-cyber: 
+    0 0 10px var(--color-cyber-cyan),
+    0 0 20px var(--color-cyber-cyan);
+  --text-shadow-glitch: 
+    2px 0 2px rgba(0, 255, 240, 0.3),
+    -2px 0 2px rgba(255, 0, 255, 0.3);
+}
