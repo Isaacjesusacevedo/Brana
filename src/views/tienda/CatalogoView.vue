@@ -223,11 +223,11 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 
 import StarsBackground from '@/components/tienda/common/StarBackground.vue';
 import BaseModal       from '@/components/tienda/common/BaseModal.vue';
-import ProductList     from '@/components/tienda/producto/ProductFilter.vue';
+import ProductList     from '@/components/tienda/producto/ProductList.vue';
 import ProducQuickView from '@/components/tienda/producto/ProducQuickView.vue';
 import ProductFilter   from '@/components/tienda/producto/ProductFilter.vue';
 import type { FilterState } from '@/components/tienda/producto/ProductFilter.vue';
@@ -238,6 +238,7 @@ import type { ProductQueryParams } from '@/services/tienda/api';
 import { useCartStore } from '@/stores/useCartStore';
 
 const router = useRouter();
+const route  = useRoute();
 const cart   = useCartStore();
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -334,7 +335,11 @@ const loadProducts = async () => {
   }
 };
 
-onMounted(loadProducts);
+onMounted(() => {
+  const catQuery = route.query.categoria as string | undefined;
+  if (catQuery) selectedCategory.value = catQuery;
+  loadProducts();
+});
 watch([selectedCategory, () => filterState.value.soloNuevos], () => {
   currentPage.value = 1;
   loadProducts();
