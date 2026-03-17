@@ -1,579 +1,432 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { useAdminStore } from '@/stores/useAdminStore'
+import { ref, reactive, onMounted } from 'vue'
 
-const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8080/api'
+import { useAdminStore }          from '@/stores/useAdminStore'
+import { useAdminProductosStore } from '@/stores/admin/adminProductosStore'
+import { adminProductoService }   from '@/services/admin/adminProductoService'
+import TablaProductos             from '@/components/admin/TablaProductos.vue'
+import type { Product }           from '@/types/producto.types'
 
-const adminStore = useAdminStore()
+// ── Constantes ────────────────────────────────────────────────────────────────
 
-const TIPOS = ['Remera', 'Buzo', 'Pantalón'] as const
-const TALLES = ['S', 'M', 'L', 'XL'] as const
+const TIPOS  = ['Remera', 'Buzo', 'Pantalón'] as const
+const TALLES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
 
-// IDs según el orden de inserción del seeder (Remeras=1, Buzos=2, Pantalones=3)
 const TIPO_A_CATEGORIA_ID: Record<string, number> = {
   'Remera':   1,
   'Buzo':     2,
   'Pantalón': 3,
 }
 
-type Tipo = typeof TIPOS[number]
+type Tipo  = typeof TIPOS[number]
 type Talle = typeof TALLES[number]
+type Mode  = 'list' | 'create' | 'edit'
+
+// ── Stores ────────────────────────────────────────────────────────────────────
+
+const adminStore    = useAdminStore()
+const productosStore = useAdminProductosStore()
+
+// ── Estado de la vista ────────────────────────────────────────────────────────
+
+const mode           = ref<Mode>('list')
+const editingProduct = ref<Product | null>(null)
+
+// ── Estado del formulario ─────────────────────────────────────────────────────
 
 interface ProductForm {
-  nombre: string
-  precio: number | ''
+  nombre:      string
+  precio:      number | ''
   descripcion: string
-  tipo: Tipo | ''
-  talles: Talle[]
-  imagen: File | null
+  tipo:        Tipo | ''
+  talles:      Talle[]
+  imagen:      File | null
 }
 
 const form = reactive<ProductForm>({
-  nombre: '',
-  precio: '',
+  nombre:      '',
+  precio:      '',
   descripcion: '',
-  tipo: '',
-  talles: [],
-  imagen: null,
+  tipo:        '',
+  talles:      [],
+  imagen:      null,
 })
 
 const imagePreview = ref<string | null>(null)
-const loading = ref(false)
-const successMsg = ref('')
-const errorMsg = ref('')
+const loading      = ref(false)
+const successMsg   = ref('')
+const errorMsg     = ref('')
+
+// ── Ciclo de vida ─────────────────────────────────────────────────────────────
+
+onMounted(() => productosStore.fetchProducts())
+
+// ── Navegación entre modos ────────────────────────────────────────────────────
+
+function openCreate() {
+  resetForm()
+  editingProduct.value = null
+  mode.value           = 'create'
+}
+
+function openEdit(product: Product) {
+  resetForm()
+  editingProduct.value = product
+
+  form.nombre      = product.nombre ?? ''
+  form.precio      = product.precio ?? ''
+  form.descripcion = product.descripcion ?? ''
+  form.talles      = (product.tallas ?? []) as Talle[]
+
+  // Inferir "tipo" desde el nombre de la categoría del backend
+  const cat = (product.categoria ?? '').toLowerCase()
+  if      (cat.includes('remera'))                                form.tipo = 'Remera'
+  else if (cat.includes('buzo'))                                  form.tipo = 'Buzo'
+  else if (cat.includes('pantalon') || cat.includes('pantalón'))  form.tipo = 'Pantalón'
+  else                                                            form.tipo = ''
+
+  imagePreview.value = product.imagen ?? null
+  mode.value         = 'edit'
+}
+
+function closeForm() {
+  mode.value           = 'list'
+  editingProduct.value = null
+  resetForm()
+}
+
+// ── Helpers del formulario ────────────────────────────────────────────────────
 
 function handleFileChange(e: Event) {
-  const input = e.target as HTMLInputElement
-  const file = input.files?.[0] ?? null
-  form.imagen = file
-  if (file) {
-    imagePreview.value = URL.createObjectURL(file)
-  } else {
-    imagePreview.value = null
-  }
+  const file = (e.target as HTMLInputElement).files?.[0] ?? null
+  form.imagen        = file
+  imagePreview.value = file ? URL.createObjectURL(file) : null
 }
 
 function toggleTalle(talle: Talle) {
   const idx = form.talles.indexOf(talle)
-  if (idx === -1) {
-    form.talles.push(talle)
-  } else {
-    form.talles.splice(idx, 1)
-  }
+  if (idx === -1) form.talles.push(talle)
+  else            form.talles.splice(idx, 1)
 }
 
 function resetForm() {
-  form.nombre = ''
-  form.precio = ''
+  form.nombre      = ''
+  form.precio      = ''
   form.descripcion = ''
-  form.tipo = ''
-  form.talles = []
-  form.imagen = null
+  form.tipo        = ''
+  form.talles      = []
+  form.imagen      = null
   imagePreview.value = null
-  // Limpiar el input de archivo
+  successMsg.value   = ''
+  errorMsg.value     = ''
   const fileInput = document.getElementById('imagen') as HTMLInputElement | null
   if (fileInput) fileInput.value = ''
 }
 
-async function handleSubmit() {
-  errorMsg.value = ''
-  successMsg.value = ''
+// ── Validación compartida ─────────────────────────────────────────────────────
 
-  if (!form.tipo) {
-    errorMsg.value = 'Seleccioná un tipo de producto.'
-    return
-  }
-  if (form.talles.length === 0) {
-    errorMsg.value = 'Seleccioná al menos un talle.'
-    return
-  }
-  if (!form.imagen) {
-    errorMsg.value = 'Seleccioná una imagen para el producto.'
-    return
-  }
-  if (!form.precio || Number(form.precio) <= 0) {
-    errorMsg.value = 'El precio debe ser mayor a 0.'
-    return
-  }
+function validate(requireImagen: boolean): boolean {
+  errorMsg.value = ''
+  if (!form.tipo)                             { errorMsg.value = 'Seleccioná un tipo de producto.'; return false }
+  if (!form.talles.length)                    { errorMsg.value = 'Seleccioná al menos un talle.';  return false }
+  if (!form.precio || Number(form.precio) <= 0) { errorMsg.value = 'El precio debe ser mayor a 0.'; return false }
+  if (requireImagen && !form.imagen)          { errorMsg.value = 'Seleccioná una imagen para el producto.'; return false }
+  return true
+}
+
+// ── Crear producto ────────────────────────────────────────────────────────────
+
+async function handleSubmit() {
+  if (!validate(true)) return
 
   loading.value = true
-
   try {
-    const token = adminStore.token
-    if (!token) {
-      errorMsg.value = 'No hay sesión activa. Volvé a iniciar sesión.'
-      return
-    }
-
-    const payload = new FormData()
-    payload.append('nombre', form.nombre)
-    payload.append('precio', String(form.precio))
-    payload.append('descripcion', form.descripcion)
-    payload.append('categoriaId', String(TIPO_A_CATEGORIA_ID[form.tipo] ?? 0))
-    form.talles.forEach(t => payload.append('tallas', t))
-    payload.append('imagen', form.imagen)
-
-    const res = await fetch(`${BASE_URL}/products`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // No incluir Content-Type: FormData lo setea automáticamente con el boundary correcto
-      },
-      body: payload,
+    const token = adminStore.token!
+    await adminProductoService.create(token, {
+      nombre:      form.nombre,
+      descripcion: form.descripcion,
+      precio:      Number(form.precio),
+      categoriaId: TIPO_A_CATEGORIA_ID[form.tipo] ?? 1,
+      nuevo:       false,
+      tallas:      [...form.talles],
+      imagen:      form.imagen!,
     })
-
-    const json = await res.json()
-
-    if (!res.ok || !json.success) {
-      errorMsg.value = json.errors?.[0] ?? json.message ?? `Error ${res.status}`
-      return
-    }
 
     successMsg.value = `Producto "${form.nombre}" creado con éxito.`
     resetForm()
-  } catch {
-    errorMsg.value = 'No se pudo conectar con el servidor.'
+    await productosStore.fetchProducts()
+
+    // Volver a la lista tras un breve instante para que el usuario vea el mensaje
+    setTimeout(() => { mode.value = 'list' }, 1500)
+  } catch (e) {
+    errorMsg.value = e instanceof Error ? e.message : 'No se pudo conectar con el servidor.'
   } finally {
     loading.value = false
+  }
+}
+
+// ── Editar producto ───────────────────────────────────────────────────────────
+
+async function handleUpdate() {
+  if (!validate(false)) return
+
+  loading.value = true
+  try {
+    const token = adminStore.token!
+    const id    = String(editingProduct.value!.id)
+
+    // Conservar las imágenes actuales del producto (el PUT no acepta archivo)
+    const currentImages =
+      editingProduct.value!.imagenes?.length
+        ? editingProduct.value!.imagenes
+        : editingProduct.value!.imagen
+          ? [editingProduct.value!.imagen]
+          : []
+
+    await adminProductoService.update(token, id, {
+      nombre:      form.nombre,
+      descripcion: form.descripcion,
+      precio:      Number(form.precio),
+      categoriaId: TIPO_A_CATEGORIA_ID[form.tipo] ?? 1,
+      nuevo:       editingProduct.value!.nuevo ?? false,
+      tallas:      [...form.talles],
+      imagenUrls:  currentImages,
+    })
+
+    successMsg.value = 'Producto actualizado correctamente.'
+    await productosStore.fetchProducts()
+    setTimeout(() => { mode.value = 'list' }, 1200)
+  } catch (e) {
+    errorMsg.value = e instanceof Error ? e.message : 'No se pudo conectar con el servidor.'
+  } finally {
+    loading.value = false
+  }
+}
+
+// ── Eliminar producto ─────────────────────────────────────────────────────────
+
+async function handleDelete(id: string) {
+  try {
+    await productosStore.removeProduct(id)
+  } catch {
+    // Si falla, restaurar el estado correcto volviendo a hacer fetch
+    await productosStore.fetchProducts()
   }
 }
 </script>
 
 <template>
-  <div class="admin-productos">
-    <div class="page-header">
-      <h1>Nuevo Producto</h1>
-      <p>Completá el formulario para agregar un producto al catálogo.</p>
-    </div>
+  <div :class="['admin-productos', { 'admin-productos--wide': mode === 'list' }]">
 
-    <form class="product-form" @submit.prevent="handleSubmit">
+    <!-- ══ MODO: LISTA ════════════════════════════════════════════════════════ -->
+    <template v-if="mode === 'list'">
+      <div class="page-header page-header--row">
+        <div>
+          <h1>Productos</h1>
+          <p>{{ productosStore.total }} producto{{ productosStore.total !== 1 ? 's' : '' }} en el catálogo</p>
+        </div>
+        <button class="btn-primary" @click="openCreate">+ Nuevo Producto</button>
+      </div>
 
-      <!-- ── Nombre ─────────────────────────────────────────── -->
-      <div class="form-row">
+      <div v-if="productosStore.error" class="alert alert-error" role="alert">
+        {{ productosStore.error }}
+      </div>
+
+      <TablaProductos
+        :products="productosStore.products"
+        :loading="productosStore.loading"
+        @edit="openEdit"
+        @delete="handleDelete"
+      />
+    </template>
+
+    <!-- ══ MODO: FORMULARIO (CREAR / EDITAR) ══════════════════════════════════ -->
+    <template v-else>
+      <!-- Cabecera del formulario -->
+      <div class="page-header">
+        <button class="btn-back" @click="closeForm">← Volver</button>
+        <h1>{{ mode === 'edit' ? 'Editar Producto' : 'Nuevo Producto' }}</h1>
+        <p>
+          {{
+            mode === 'edit'
+              ? 'Modificá los datos del producto seleccionado.'
+              : 'Completá el formulario para agregar un producto al catálogo.'
+          }}
+        </p>
+      </div>
+
+      <form
+        class="product-form"
+        @submit.prevent="mode === 'edit' ? handleUpdate() : handleSubmit()"
+      >
+        <!-- ── Nombre + Precio ──────────────────────────────────────── -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="nombre">Nombre <span class="required">*</span></label>
+            <input
+              id="nombre"
+              v-model="form.nombre"
+              type="text"
+              required
+              placeholder="Ej: Remera Arcana"
+            />
+          </div>
+          <div class="form-group">
+            <label for="precio">Precio (ARS) <span class="required">*</span></label>
+            <input
+              id="precio"
+              v-model="form.precio"
+              type="number"
+              required
+              min="1"
+              step="1"
+              placeholder="Ej: 25000"
+            />
+          </div>
+        </div>
+
+        <!-- ── Descripción ─────────────────────────────────────────── -->
         <div class="form-group">
-          <label for="nombre">Nombre <span class="required">*</span></label>
-          <input
-            id="nombre"
-            v-model="form.nombre"
-            type="text"
+          <label for="descripcion">Descripción <span class="required">*</span></label>
+          <textarea
+            id="descripcion"
+            v-model="form.descripcion"
             required
-            placeholder="Ej: Remera Arcana"
+            rows="4"
+            placeholder="Descripción del producto..."
           />
         </div>
 
-        <!-- ── Precio ─────────────────────────────────────────── -->
+        <!-- ── Tipo / Categoría ────────────────────────────────────── -->
         <div class="form-group">
-          <label for="precio">Precio (ARS) <span class="required">*</span></label>
-          <input
-            id="precio"
-            v-model="form.precio"
-            type="number"
-            required
-            min="1"
-            step="1"
-            placeholder="Ej: 25000"
-          />
+          <label for="tipo">Tipo <span class="required">*</span></label>
+          <select id="tipo" v-model="form.tipo" required>
+            <option value="" disabled>Seleccioná un tipo...</option>
+            <option v-for="t in TIPOS" :key="t" :value="t">{{ t }}</option>
+          </select>
         </div>
-      </div>
 
-      <!-- ── Descripción ─────────────────────────────────────── -->
-      <div class="form-group">
-        <label for="descripcion">Descripción <span class="required">*</span></label>
-        <textarea
-          id="descripcion"
-          v-model="form.descripcion"
-          required
-          rows="4"
-          placeholder="Descripción del producto..."
-        />
-      </div>
+        <!-- ── Talles ──────────────────────────────────────────────── -->
+        <div class="form-group">
+          <label>Talles disponibles <span class="required">*</span></label>
+          <div class="talles-group">
+            <button
+              v-for="talle in TALLES"
+              :key="talle"
+              type="button"
+              class="talle-btn"
+              :class="{ selected: form.talles.includes(talle) }"
+              @click="toggleTalle(talle)"
+            >
+              {{ talle }}
+            </button>
+          </div>
+        </div>
 
-      <!-- ── Tipo ───────────────────────────────────────────── -->
-      <div class="form-group">
-        <label for="tipo">Tipo <span class="required">*</span></label>
-        <select id="tipo" v-model="form.tipo" required>
-          <option value="" disabled>Seleccioná un tipo...</option>
-          <option v-for="t in TIPOS" :key="t" :value="t">{{ t }}</option>
-        </select>
-      </div>
-
-      <!-- ── Talles ─────────────────────────────────────────── -->
-      <div class="form-group">
-        <label>Talles disponibles <span class="required">*</span></label>
-        <div class="talles-group">
+        <!-- ── Imagen (solo en create) ─────────────────────────────── -->
+        <div v-if="mode === 'create'" class="form-group">
+          <label for="imagen">Imagen del producto <span class="required">*</span></label>
+          <div class="file-upload-area" :class="{ 'has-image': imagePreview }">
+            <input
+              id="imagen"
+              type="file"
+              accept="image/*"
+              class="file-input"
+              @change="handleFileChange"
+            />
+            <div v-if="!imagePreview" class="file-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <span>Clic para seleccionar imagen</span>
+              <small>JPG, PNG, WEBP — máx 10 MB</small>
+            </div>
+            <img v-else :src="imagePreview" alt="Preview" class="image-preview" />
+          </div>
           <button
-            v-for="talle in TALLES"
-            :key="talle"
+            v-if="imagePreview"
             type="button"
-            class="talle-btn"
-            :class="{ selected: form.talles.includes(talle) }"
-            @click="toggleTalle(talle)"
+            class="remove-image-btn"
+            @click="() => { form.imagen = null; imagePreview = null }"
           >
-            {{ talle }}
+            Quitar imagen
           </button>
         </div>
-      </div>
 
-      <!-- ── Imagen ─────────────────────────────────────────── -->
-      <div class="form-group">
-        <label for="imagen">Imagen del producto <span class="required">*</span></label>
-        <div class="file-upload-area" :class="{ 'has-image': imagePreview }">
-          <input
-            id="imagen"
-            type="file"
-            accept="image/*"
-            class="file-input"
-            @change="handleFileChange"
-          />
-          <div v-if="!imagePreview" class="file-placeholder">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
-            <span>Clic para seleccionar imagen</span>
-            <small>JPG, PNG, WEBP — máx 5 MB</small>
+        <!-- ── Imagen actual (edit — solo lectura) ─────────────────── -->
+        <div v-else class="form-group">
+          <label>Imagen actual</label>
+          <div class="file-upload-area has-image" style="cursor: default;">
+            <img :src="imagePreview ?? ''" alt="Imagen actual" class="image-preview" />
           </div>
-          <img v-else :src="imagePreview" alt="Preview" class="image-preview" />
+          <small class="form-hint">Para reemplazar la imagen, eliminá el producto y volvé a crearlo.</small>
         </div>
-        <button
-          v-if="imagePreview"
-          type="button"
-          class="remove-image-btn"
-          @click="() => { form.imagen = null; imagePreview = null }"
-        >
-          Quitar imagen
-        </button>
-      </div>
 
-      <!-- ── Feedback ───────────────────────────────────────── -->
-      <div v-if="errorMsg" class="alert alert-error" role="alert">
-        {{ errorMsg }}
-      </div>
-      <div v-if="successMsg" class="alert alert-success" role="status">
-        {{ successMsg }}
-      </div>
+        <!-- ── Feedback ────────────────────────────────────────────── -->
+        <div v-if="errorMsg"   class="alert alert-error"   role="alert">{{ errorMsg }}</div>
+        <div v-if="successMsg" class="alert alert-success" role="status">{{ successMsg }}</div>
 
-      <!-- ── Acciones ───────────────────────────────────────── -->
-      <div class="form-actions">
-        <button type="button" class="btn-secondary" :disabled="loading" @click="resetForm">
-          Limpiar
-        </button>
-        <button type="submit" class="btn-primary" :disabled="loading">
-          <span v-if="loading" class="spinner" />
-          {{ loading ? 'Guardando...' : 'Crear Producto' }}
-        </button>
-      </div>
-    </form>
+        <!-- ── Acciones ────────────────────────────────────────────── -->
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            :disabled="loading"
+            @click="closeForm"
+          >
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary" :disabled="loading">
+            <span v-if="loading" class="spinner" />
+            {{ loading ? 'Guardando...' : (mode === 'edit' ? 'Guardar cambios' : 'Crear Producto') }}
+          </button>
+        </div>
+      </form>
+    </template>
+
   </div>
 </template>
 
 <style scoped>
 @import '@/assets/css/views/admin-productos.css';
 
-
-.page-header {
-  margin-bottom: 36px;
+/* ── Ancho extendido en modo lista (tabla ocupa más espacio) ────────────── */
+.admin-productos--wide {
+  max-width: 1100px;
 }
 
-.page-header h1 {
-  font-size: 26px;
-  font-weight: 800;
-  color: #fff;
-  margin-bottom: 6px;
-  letter-spacing: 1px;
-}
-
-.page-header p {
-  color: #666;
-  font-size: 14px;
-}
-
-/* ── Form ───────────────────────────────────────────────── */
-.product-form {
+/* ── Cabecera con botón a la derecha (modo lista) ───────────────────────── */
+.page-header--row {
   display: flex;
-  flex-direction: column;
-  gap: 24px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-group label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #aaa;
-  letter-spacing: 0.4px;
-}
-
-.required {
-  color: #DAA520;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  background: #111;
-  border: 1px solid #222;
-  border-radius: 8px;
-  padding: 12px 16px;
-  color: #fff;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s;
-  width: 100%;
-  font-family: inherit;
-}
-
-.form-group input::placeholder,
-.form-group textarea::placeholder {
-  color: #444;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  border-color: #DAA520;
-}
-
-.form-group select {
-  cursor: pointer;
-  appearance: auto;
-}
-
-.form-group textarea {
-  resize: vertical;
-  min-height: 100px;
-}
-
-/* ── Talles ─────────────────────────────────────────────── */
-.talles-group {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.talle-btn {
-  width: 52px;
-  height: 52px;
-  border: 1px solid #222;
-  border-radius: 8px;
-  background: #111;
-  color: #777;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.talle-btn:hover {
-  border-color: #DAA520;
-  color: #DAA520;
-}
-
-.talle-btn.selected {
-  background: rgba(218, 165, 32, 0.12);
-  border-color: #DAA520;
-  color: #DAA520;
-}
-
-/* ── File upload ────────────────────────────────────────── */
-.file-upload-area {
-  position: relative;
-  border: 2px dashed #222;
-  border-radius: 10px;
-  background: #111;
-  min-height: 140px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: border-color 0.2s;
-  overflow: hidden;
-}
-
-.file-upload-area:hover {
-  border-color: #DAA520;
-}
-
-.file-upload-area.has-image {
-  border-style: solid;
-  border-color: #333;
-}
-
-.file-input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-  width: 100%;
-  height: 100%;
-}
-
-.file-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  color: #555;
-  pointer-events: none;
-}
-
-.file-placeholder svg {
-  width: 40px;
-  height: 40px;
-  color: #333;
-}
-
-.file-placeholder span {
-  font-size: 14px;
-  color: #777;
-}
-
-.file-placeholder small {
-  font-size: 12px;
-  color: #444;
-}
-
-.image-preview {
-  width: 100%;
-  height: 220px;
-  object-fit: cover;
-  display: block;
-  pointer-events: none;
-}
-
-.remove-image-btn {
-  align-self: flex-start;
+/* ── Botón "← Volver" (modo formulario) ────────────────────────────────── */
+.btn-back {
   background: transparent;
-  border: 1px solid #333;
-  border-radius: 6px;
-  color: #777;
-  font-size: 12px;
-  padding: 6px 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.remove-image-btn:hover {
-  border-color: #f87171;
-  color: #f87171;
-}
-
-/* ── Alerts ─────────────────────────────────────────────── */
-.alert {
-  padding: 14px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-}
-
-.alert-error {
-  background: rgba(220, 38, 38, 0.1);
-  border: 1px solid rgba(220, 38, 38, 0.3);
-  color: #f87171;
-}
-
-.alert-success {
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  color: #4ade80;
-}
-
-/* ── Actions ────────────────────────────────────────────── */
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding-top: 8px;
-}
-
-.btn-primary {
-  background: #DAA520;
-  color: #000;
   border: none;
-  border-radius: 8px;
-  padding: 12px 28px;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
+  color: #555;
+  font-size: 13px;
   cursor: pointer;
-  transition: background 0.2s, opacity 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  padding: 0;
+  margin-bottom: 12px;
+  display: block;
+  transition: color 0.15s;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: #FFD700;
+.btn-back:hover {
+  color: #DAA520;
 }
 
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: transparent;
-  color: #777;
-  border: 1px solid #2a2a2a;
-  border-radius: 8px;
-  padding: 12px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  border-color: #555;
-  color: #ccc;
-}
-
-.btn-secondary:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.spinner {
-  width: 15px;
-  height: 15px;
-  border: 2px solid rgba(0, 0, 0, 0.3);
-  border-top-color: #000;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  flex-shrink: 0;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ── Responsive ─────────────────────────────────────────── */
-@media (max-width: 640px) {
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .form-actions {
-    flex-direction: column-reverse;
-  }
-
-  .btn-primary,
-  .btn-secondary {
-    width: 100%;
-    justify-content: center;
-  }
+/* ── Nota informativa debajo del campo imagen en edición ────────────────── */
+.form-hint {
+  font-size: 12px;
+  color: #444;
+  margin-top: 6px;
+  display: block;
 }
 </style>
